@@ -40,13 +40,25 @@ class LocalOrchestratorTray(rumps.App):
         try:
             # Python 3.9+ approach using importlib.resources
             from importlib import resources
-            with resources.files('local_orchestrator_tray.assets').joinpath('tray-icon.png') as path:
-                return str(path)
-        except (FileNotFoundError, ModuleNotFoundError):
-            # Development fallback
+            try:
+                # Try the new API first (Python 3.9+)
+                ref = resources.files('local_orchestrator_tray').joinpath(
+                    'assets', 'tray-icon.png')
+                with resources.as_file(ref) as path:
+                    return str(path)
+            except AttributeError:
+                # Fallback for older Python versions
+                import local_orchestrator_tray.assets
+                with resources.path(local_orchestrator_tray.assets, 'tray-icon.png') as path:
+                    return str(path)
+        except (FileNotFoundError, ModuleNotFoundError, ImportError, TypeError):
+            # Development fallback - check multiple locations
             icon_path = Path(__file__).parent / 'assets' / 'tray-icon.png'
             if icon_path.exists():
                 return str(icon_path)
+
+            # If we can't find the icon, log and continue without it
+            print(f"Warning: Could not find tray-icon.png in any expected location")
             return None
 
     def ensure_config_file(self):

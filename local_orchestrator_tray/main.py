@@ -49,10 +49,11 @@ class LocalOrchestratorTray(rumps.App):
         # First check if we're in a py2app bundle
         if hasattr(sys, 'frozen') and sys.frozen:
             # py2app bundles resources in Contents/Resources/
-            bundle_path = Path(sys.executable).parent.parent / 'Resources' / 'assets' / 'tray-icon.png'
+            bundle_path = Path(sys.executable).parent.parent / \
+                'Resources' / 'assets' / 'tray-icon.png'
             if bundle_path.exists():
                 return str(bundle_path)
-        
+
         try:
             # Python 3.9+ approach using importlib.resources
             from importlib import resources
@@ -87,7 +88,7 @@ class LocalOrchestratorTray(rumps.App):
             with open(self.config_path, 'w') as f:
                 yaml.dump({}, f, default_flow_style=False)
 
-    def _update_menu(self):
+    def _update_menu(self, _=None):
         """Update menu items with current connection status."""
         status = self.telegram_client.get_connection_status()
 

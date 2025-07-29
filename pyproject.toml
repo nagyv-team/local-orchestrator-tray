@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-orchestrator-tray"
+version = "0.1.0"
+description = "A Mac system tray application that listens for events in a Telegram chat"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Unlicense"}
+authors = [
+    {name = "nagyv-team"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers", 
+    "License :: Public Domain",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "rumps>=0.4.0",
+    "PyYAML>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nagyv-team/local-orchestrator-tray"
+Repository = "https://github.com/nagyv-team/local-orchestrator-tray"
+
+[project.scripts]
+local-orchestrator-tray = "local_orchestrator_tray:main"

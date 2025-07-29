@@ -1,0 +1,30 @@
+{
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "runArgs": [
+        "--privileged"
+    ],
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/python:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
+        "ghcr.io/eitsupi/devcontainer-features/jq-likes:2": {
+            "jqVersion": "latest",
+            "yqVersion": "latest",
+            "gojqVersion": "none",
+            "xqVersion": "none"
+        },
+        "ghcr.io/devcontainers-extra/features/direnv:1": {}
+    },
+    "postCreateCommand": "bash .devcontainer/install_tools.sh",
+    "shutdownAction": "none",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "anthropic.claude-code"
+            ]
+        }
+    },
+}

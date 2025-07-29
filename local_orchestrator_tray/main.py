@@ -15,13 +15,12 @@ class LocalOrchestratorTray(rumps.App):
     """Main tray application class."""
     
     def __init__(self):
-        # Get the directory where this script is located
-        script_dir = Path(__file__).parent
-        icon_path = script_dir / "assets" / "tray-icon.png"
+        # Try multiple paths to find the icon
+        icon_path = self._find_icon_path()
         
         super(LocalOrchestratorTray, self).__init__(
             "Local Orchestrator", 
-            icon=str(icon_path),  # Use the tray icon from assets folder
+            icon=str(icon_path) if icon_path else None,  # Use the tray icon if found
             quit_button=None  # We'll handle quit ourselves
         )
         
@@ -35,6 +34,29 @@ class LocalOrchestratorTray(rumps.App):
             "Quit"
         ]
     
+    def _find_icon_path(self):
+        """Find the tray icon using proper resource management."""
+        try:
+            # Python 3.9+ approach using importlib.resources
+            from importlib import resources
+            with resources.files('local_orchestrator_tray.assets').joinpath('tray-icon.png') as path:
+                return str(path)
+        except (ImportError, AttributeError):
+            # Python 3.7-3.8 fallback
+            try:
+                from importlib import resources
+                with resources.path('local_orchestrator_tray.assets', 'tray-icon.png') as path:
+                    return str(path)
+            except ImportError:
+                # Final fallback for development
+                return str(Path(__file__).parent / 'assets' / 'tray-icon.png')
+        except (FileNotFoundError, ModuleNotFoundError):
+            # Development fallback
+            icon_path = Path(__file__).parent / 'assets' / 'tray-icon.png'
+            if icon_path.exists():
+                return str(icon_path)
+            return None
+
     def ensure_config_file(self):
         """Create empty configuration file if it doesn't exist."""
         # Ensure .config directory exists

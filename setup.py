@@ -24,10 +24,10 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/nagyv-team/local-orchestrator-tray",
-    py_modules=["local_orchestrator_tray"],
-    data_files=[
-        ("assets", ["assets/tray-icon.png"]),
-    ],
+    packages=find_packages(),
+    package_data={
+        'local_orchestrator_tray': ['assets/*'],
+    },
     include_package_data=True,
     install_requires=requirements,
     entry_points={

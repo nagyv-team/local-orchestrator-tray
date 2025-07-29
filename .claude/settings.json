@@ -24,7 +24,10 @@
       "Bash(node *)",
       "Bash(which *)",
       "Bash(pwd)",
-      "Bash(ls *)"
+      "Bash(ls *)",
+      "mcp__memory-local__create_entities",
+      "mcp__memory-local__create_relations",
+      "mcp__memory-local__search_nodes"
     ],
     "deny": [
       "Bash(rm -rf /)",
@@ -106,5 +109,8 @@
     ]
   },
   "includeCoAuthoredBy": true,
-  "enabledMcpjsonServers": ["claude-flow", "ruv-swarm"]
+  "enabledMcpjsonServers": [
+    "claude-flow",
+    "ruv-swarm"
+  ]
 }

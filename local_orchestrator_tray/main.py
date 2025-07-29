@@ -12,10 +12,10 @@ import rumps
 
 # Fix import for py2app packaging - use absolute import
 try:
-    from local_orchestrator_tray.telegram_client import TelegramClient, MockTelegramClient
+    from local_orchestrator_tray.telegram_client import TelegramClient
 except ImportError:
     # Fallback for relative import in development
-    from .telegram_client import TelegramClient, MockTelegramClient
+    from .telegram_client import TelegramClient
 
 
 class LocalOrchestratorTray(rumps.App):
@@ -34,10 +34,10 @@ class LocalOrchestratorTray(rumps.App):
 
         self.config_path = Path.home() / ".config" / "local-orchestrator-tray.yaml"
         self.ensure_config_file()
-        
+
         # Initialize Telegram client
         self.telegram_client = TelegramClient(self.config_path)
-        
+
         # Start Telegram client
         self.telegram_client.start_client()
 
@@ -83,7 +83,7 @@ class LocalOrchestratorTray(rumps.App):
     def _update_menu(self):
         """Update menu items with current connection status."""
         status = self.telegram_client.get_connection_status()
-        
+
         # Create dynamic menu based on connection status
         self.menu = [
             "Open configuration",
@@ -92,7 +92,7 @@ class LocalOrchestratorTray(rumps.App):
             None,  # Separator
             "Quit"
         ]
-        
+
         # Schedule next update
         rumps.Timer(self._update_menu, 5).start()  # Update every 5 seconds
 
@@ -108,7 +108,7 @@ class LocalOrchestratorTray(rumps.App):
                 self.telegram_client.stop_client()
             except Exception as e:
                 print(f"Error stopping Telegram client: {e}")
-                
+
     @rumps.clicked("Quit")
     def quit_application(self, _):
         """Quit the application."""

@@ -9,7 +9,13 @@ import sys
 import yaml
 from pathlib import Path
 import rumps
-from .telegram_client import TelegramClient, MockTelegramClient
+
+# Fix import for py2app packaging - use absolute import
+try:
+    from local_orchestrator_tray.telegram_client import TelegramClient, MockTelegramClient
+except ImportError:
+    # Fallback for relative import in development
+    from .telegram_client import TelegramClient, MockTelegramClient
 
 
 class LocalOrchestratorTray(rumps.App):

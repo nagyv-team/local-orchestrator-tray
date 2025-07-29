@@ -37,13 +37,13 @@ class LocalOrchestratorTray(rumps.App):
         # Create initial menu with MenuItem objects for dynamic items
         self.telegram_status_item = rumps.MenuItem("Telegram: Connecting...")
         
-        initial_menu = rumps.Menu([
+        initial_menu = [
             "Open configuration",
             None,  # Separator
             self.telegram_status_item,
             None,  # Separator
             "Quit"
-        ])
+        ]
 
         super(LocalOrchestratorTray, self).__init__(
             "Local Orchestrator",

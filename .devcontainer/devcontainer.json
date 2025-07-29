@@ -22,6 +22,9 @@
     "shutdownAction": "none",
     "customizations": {
         "vscode": {
+            "settings": {
+                "python.analysis.typeCheckingMode": "off"
+            },
             "extensions": [
                 "anthropic.claude-code"
             ]

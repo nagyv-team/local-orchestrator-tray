@@ -31,7 +31,7 @@ class LocalOrchestratorTray(rumps.App):
         # Initialize Telegram client
         self.telegram_client = TelegramClient(self.config_path)
 
-        # Start Telegram client
+        # Start Telegram client (will handle config validation internally)
         self.telegram_client.start_client()
 
         # Create initial menu with MenuItem objects for dynamic items

@@ -73,9 +73,13 @@ class TelegramClient:
         self.running = False
         self._loop = None
         self._thread = None
+        self.config_valid = False
+        self.config_error = None
 
         self.load_config()
-        self.setup_actions()
+        self.validate_config()
+        if self.config_valid:
+            self.setup_actions()
 
     def load_config(self):
         """Load configuration from YAML file."""
@@ -96,6 +100,49 @@ class TelegramClient:
             logger.error(f"Failed to load config: {e}")
             self.config = {'telegram': {}, 'actions': {}}
 
+    def validate_config(self):
+        """Validate the configuration and set validation status."""
+        try:
+            # Check if config is a dictionary
+            if not isinstance(self.config, dict):
+                self.config_error = "Config file must contain a YAML dictionary"
+                return
+
+            # Check telegram section
+            telegram_config = self.config.get('telegram', {})
+            if not isinstance(telegram_config, dict):
+                self.config_error = "Telegram section must be a dictionary"
+                return
+
+            # Check if bot token exists
+            bot_token = telegram_config.get('bot_token')
+            if not bot_token or not isinstance(bot_token, str) or not bot_token.strip():
+                self.config_error = "Missing or invalid Telegram bot token"
+                return
+
+            # Check actions section if it exists
+            actions_config = self.config.get('actions', {})
+            if not isinstance(actions_config, dict):
+                self.config_error = "Actions section must be a dictionary"
+                return
+
+            # Validate each action
+            for action_name, action_config in actions_config.items():
+                if not isinstance(action_config, dict):
+                    self.config_error = f"Action '{action_name}' must be a dictionary"
+                    return
+                
+                if not action_config.get('command'):
+                    self.config_error = f"Action '{action_name}' missing required 'command' field"
+                    return
+
+            # If we get here, config is valid
+            self.config_valid = True
+            self.config_error = None
+
+        except Exception as e:
+            self.config_error = f"Config validation error: {e}"
+
     def setup_actions(self):
         """Setup actions from configuration."""
         actions_config = self.config.get('actions', {})
@@ -110,12 +157,20 @@ class TelegramClient:
 
     def get_connection_status(self) -> str:
         """Get current connection status for tray menu."""
+        if not self.config_valid:
+            return f"Config Error: {self.config_error}"
         return self.connection_status
 
     def start_client(self) -> bool:
         """Start the Telegram client in a separate thread."""
         if self.running:
             return True
+
+        # Don't start client if config is invalid
+        if not self.config_valid:
+            self.connection_status = f"Config Error: {self.config_error}"
+            logger.error(f"Cannot start client - invalid config: {self.config_error}")
+            return False
 
         token = self.config.get('telegram', {}).get('bot_token')
         if not token:

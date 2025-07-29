@@ -34,3 +34,9 @@ Repository = "https://github.com/nagyv-team/local-orchestrator-tray"
 
 [project.scripts]
 local-orchestrator-tray = "local_orchestrator_tray:main"
+
+[tool.setuptools.data-files]
+"assets" = ["assets/tray-icon.png"]
+
+[tool.setuptools]
+include-package-data = true

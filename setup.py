@@ -18,6 +18,8 @@ with open(readme_path, "r", encoding="utf-8") as fh:
 requirements = [
     "rumps>=0.4.0",
     "PyYAML>=6.0",
+    "python-telegram-bot>=20.7",
+    "toml>=0.10.2",
 ]
 
 # py2app OPTIONS configuration
@@ -36,7 +38,7 @@ OPTIONS = {
         'LSUIElement': True,  # Background app (no dock icon)
         'NSPrincipalClass': 'NSApplication',
     },
-    'packages': ['rumps', 'yaml'],  # Ensure these packages are included
+    'packages': ['rumps', 'yaml', 'telegram', 'toml'],  # Ensure these packages are included
     'includes': ['local_orchestrator_tray'],
     'excludes': ['tkinter'],  # Exclude unnecessary packages
     'resources': [

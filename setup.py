@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
 Setup script for Local Orchestrator Tray application.
+Configured for py2app standalone Mac app building.
 """
 
+import sys
 from setuptools import setup, find_packages
 from pathlib import Path
 
@@ -11,11 +13,55 @@ readme_path = Path(__file__).parent / "README.md"
 with open(readme_path, "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# Read requirements
-requirements_path = Path(__file__).parent / "requirements.txt"
-with open(requirements_path, "r", encoding="utf-8") as fh:
-    requirements = [line.strip() for line in fh if line.strip()
-                    and not line.startswith("#")]
+# Use pyproject.toml dependencies to avoid conflicts
+# Only use requirements.txt for Mac-specific dependencies that aren't in pyproject.toml
+requirements = [
+    "rumps>=0.4.0",
+    "PyYAML>=6.0",
+]
+
+# py2app OPTIONS configuration
+OPTIONS = {
+    'argv_emulation': True,  # Handle file associations properly on Mac
+    'strip': True,           # Strip debug symbols to reduce size
+    'optimize': 2,           # Python optimization level
+    'iconfile': 'assets/tray-icon.png',  # App icon
+    'plist': {
+        'CFBundleName': 'Local Orchestrator Tray',
+        'CFBundleDisplayName': 'Local Orchestrator Tray',
+        'CFBundleIdentifier': 'com.nagyv-team.local-orchestrator-tray',
+        'CFBundleVersion': '0.1.0',
+        'CFBundleShortVersionString': '0.1.0',
+        'NSHighResolutionCapable': True,
+        'LSUIElement': True,  # Background app (no dock icon)
+        'NSPrincipalClass': 'NSApplication',
+    },
+    'packages': ['rumps', 'yaml'],  # Ensure these packages are included
+    'includes': ['local_orchestrator_tray'],
+    'excludes': ['tkinter'],  # Exclude unnecessary packages
+    'resources': [
+        'assets/',
+        'local_orchestrator_tray/assets/',
+    ],
+}
+
+# Platform-specific configuration
+if sys.platform == 'darwin':
+    # Mac-specific setup for py2app
+    extra_options = dict(
+        app=['local_orchestrator_tray/main.py'],
+        setup_requires=['py2app>=0.28.0'],
+        options={'py2app': OPTIONS},
+    )
+else:
+    # Non-Mac platforms
+    extra_options = dict(
+        entry_points={
+            "console_scripts": [
+                "local-orchestrator-tray=local_orchestrator_tray:main",
+            ],
+        },
+    )
 
 setup(
     name="local-orchestrator-tray",
@@ -30,13 +76,7 @@ setup(
         'local_orchestrator_tray': ['assets/*'],
     },
     include_package_data=True,
-    install_requires=requirements,
-    entry_points={
-        "console_scripts": [
-            "local-orchestrator-tray=local_orchestrator_tray:main",
-        ],
-    },
-    options={'py2app': OPTIONS},
+    # install_requires handled by pyproject.toml dependencies
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -50,4 +90,5 @@ setup(
     ],
     python_requires=">=3.8",
     platforms=["MacOS"],
+    **extra_options  # Apply platform-specific options
 )

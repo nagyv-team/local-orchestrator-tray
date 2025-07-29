@@ -32,8 +32,7 @@ dependencies = [
 Homepage = "https://github.com/nagyv-team/local-orchestrator-tray"
 Repository = "https://github.com/nagyv-team/local-orchestrator-tray"
 
-[project.scripts]
-local-orchestrator-tray = "local_orchestrator_tray:main"
+# Scripts are handled dynamically by setup.py for py2app compatibility
 
 [tool.setuptools.packages.find]
 where = ["."]

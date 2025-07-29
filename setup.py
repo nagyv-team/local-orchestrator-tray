@@ -38,7 +38,11 @@ OPTIONS = {
         'LSUIElement': True,  # Background app (no dock icon)
         'NSPrincipalClass': 'NSApplication',
     },
-    'packages': ['rumps', 'yaml', 'telegram', 'toml'],  # Ensure these packages are included
+    'packages': [
+        'rumps', 'yaml', 'telegram', 'toml',
+        'anyio', 'httpx', 'sniffio', 'idna',  # Required for telegram bot HTTP functionality
+        'typing_extensions', 'certifi', 'h11', 'httpcore'  # Additional HTTP dependencies
+    ],  # Ensure these packages are included
     'includes': ['local_orchestrator_tray'],
     'excludes': ['tkinter'],  # Exclude unnecessary packages
     'resources': [

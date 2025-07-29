@@ -1,0 +1,70 @@
+# Example configuration for Local Orchestrator Tray
+# Copy this file to ~/.config/local-orchestrator-tray.yaml and customize
+
+# Telegram Bot Configuration
+telegram:
+  # Get your bot token from @BotFather on Telegram
+  bot_token: "YOUR_BOT_TOKEN_HERE"
+  
+  # Optional: Restrict to specific channels/users
+  # allowed_channels:
+  #   - "@your_channel"
+  #   - "chat_id_here"
+
+# Action Definitions
+# Each action defines a command that can be triggered via Telegram messages
+actions:
+  # Example: Deploy application
+  deploy:
+    command: "docker-compose up -d"
+    description: "Deploy application using docker-compose"
+    working_dir: "/path/to/your/project"
+  
+  # Example: Backup data
+  backup:
+    command: "rsync -av /data/ /backup/"
+    description: "Backup data directory to backup location"
+  
+  # Example: Restart a service
+  restart-nginx:
+    command: "sudo systemctl restart nginx"
+    description: "Restart nginx web server"
+  
+  # Example: Check system status
+  status:
+    command: "uptime && df -h"
+    description: "Show system uptime and disk usage"
+  
+  # Example: Git operations
+  git-pull:
+    command: "git pull origin main"
+    description: "Pull latest changes from git repository"
+    working_dir: "/path/to/your/repo"
+  
+  # Example: Run tests
+  test:
+    command: "npm test"
+    description: "Run test suite"
+    working_dir: "/path/to/your/project"
+
+# Usage Examples:
+# 
+# To trigger the deploy action, send this TOML message to your bot:
+# 
+# [deploy]
+# environment = "production"
+# 
+# This will execute: docker-compose up -d --environment production
+# 
+# For backup with custom source:
+# 
+# [backup]
+# source = "/custom/path"
+# destination = "/backup/custom"
+# 
+# This will execute: rsync -av /data/ /backup/ --source /custom/path --destination /backup/custom
+#
+# Action parameters are converted to CLI arguments:
+# - camelCase/snake_case keys become --kebab-case flags
+# - Values are passed as strings
+# - Boolean true becomes flag presence, false omits the flag

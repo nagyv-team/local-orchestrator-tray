@@ -9,6 +9,7 @@ import sys
 import yaml
 from pathlib import Path
 import rumps
+from .telegram_client import TelegramClient, MockTelegramClient
 
 
 class LocalOrchestratorTray(rumps.App):
@@ -27,13 +28,15 @@ class LocalOrchestratorTray(rumps.App):
 
         self.config_path = Path.home() / ".config" / "local-orchestrator-tray.yaml"
         self.ensure_config_file()
+        
+        # Initialize Telegram client
+        self.telegram_client = TelegramClient(self.config_path)
+        
+        # Start Telegram client
+        self.telegram_client.start_client()
 
-        # Create menu items
-        self.menu = [
-            "Open configuration",
-            None,  # Separator
-            "Quit"
-        ]
+        # Create menu items (will be updated with connection status)
+        self._update_menu()
 
     def _find_icon_path(self):
         """Find the tray icon using proper resource management."""
@@ -71,21 +74,59 @@ class LocalOrchestratorTray(rumps.App):
             with open(self.config_path, 'w') as f:
                 yaml.dump({}, f, default_flow_style=False)
 
+    def _update_menu(self):
+        """Update menu items with current connection status."""
+        status = self.telegram_client.get_connection_status()
+        
+        # Create dynamic menu based on connection status
+        self.menu = [
+            "Open configuration",
+            None,  # Separator
+            f"Telegram: {status}",
+            None,  # Separator
+            "Quit"
+        ]
+        
+        # Schedule next update
+        rumps.Timer(self._update_menu, 5).start()  # Update every 5 seconds
+
     @rumps.clicked("Open configuration")
     def open_configuration(self, _):
         """Open configuration file in default editor."""
         os.system(f'open "{self.config_path}"')
 
+    def cleanup(self):
+        """Clean up resources before shutdown."""
+        if hasattr(self, 'telegram_client'):
+            try:
+                self.telegram_client.stop_client()
+            except Exception as e:
+                print(f"Error stopping Telegram client: {e}")
+                
     @rumps.clicked("Quit")
     def quit_application(self, _):
         """Quit the application."""
+        self.cleanup()
         rumps.quit_application()
 
 
 def main():
-    """Main entry point."""
-    app = LocalOrchestratorTray()
-    app.run()
+    """Main entry point with crash-safe cleanup."""
+    app = None
+    try:
+        app = LocalOrchestratorTray()
+        app.run()
+    except KeyboardInterrupt:
+        print("\nShutting down gracefully...")
+    except Exception as e:
+        print(f"Application crashed: {e}")
+    finally:
+        # Ensure cleanup happens even on crash
+        if app and hasattr(app, 'cleanup'):
+            try:
+                app.cleanup()
+            except Exception as e:
+                print(f"Error during cleanup: {e}")
 
 
 if __name__ == "__main__":

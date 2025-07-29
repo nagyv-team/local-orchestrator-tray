@@ -17,14 +17,6 @@ with open(requirements_path, "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip()
                     and not line.startswith("#")]
 
-OPTIONS = {
-    'argv_emulation': True,
-    'plist': {
-        'LSUIElement': True,
-    },
-    'packages': ['rumps'],
-}
-
 setup(
     name="local-orchestrator-tray",
     version="0.1.0",

@@ -15,9 +15,13 @@ class LocalOrchestratorTray(rumps.App):
     """Main tray application class."""
     
     def __init__(self):
+        # Get the directory where this script is located
+        script_dir = Path(__file__).parent
+        icon_path = script_dir / "assets" / "tray-icon.png"
+        
         super(LocalOrchestratorTray, self).__init__(
             "Local Orchestrator", 
-            icon=None,  # Will use default system icon
+            icon=str(icon_path),  # Use the tray icon from assets folder
             quit_button=None  # We'll handle quit ourselves
         )
         

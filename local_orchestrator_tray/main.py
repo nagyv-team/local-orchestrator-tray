@@ -25,13 +25,6 @@ class LocalOrchestratorTray(rumps.App):
         # Try multiple paths to find the icon
         icon_path = self._find_icon_path()
 
-        super(LocalOrchestratorTray, self).__init__(
-            "Local Orchestrator",
-            # Use the tray icon if found
-            icon=str(icon_path) if icon_path else None,
-            quit_button=None  # We'll handle quit ourselves
-        )
-
         self.config_path = Path.home() / ".config" / "local-orchestrator-tray.yaml"
         self.ensure_config_file()
 
@@ -41,8 +34,27 @@ class LocalOrchestratorTray(rumps.App):
         # Start Telegram client
         self.telegram_client.start_client()
 
-        # Create menu items (will be updated with connection status)
-        self._update_menu()
+        # Create initial menu with MenuItem objects for dynamic items
+        self.telegram_status_item = rumps.MenuItem("Telegram: Connecting...")
+        
+        initial_menu = [
+            "Open configuration",
+            None,  # Separator
+            self.telegram_status_item,
+            None,  # Separator
+            "Quit"
+        ]
+
+        super(LocalOrchestratorTray, self).__init__(
+            "Local Orchestrator",
+            # Use the tray icon if found
+            icon=str(icon_path) if icon_path else None,
+            menu=initial_menu,
+            quit_button=None  # We'll handle quit ourselves
+        )
+
+        # Start periodic menu updates
+        self._start_menu_updates()
 
     def _find_icon_path(self):
         """Find the tray icon using proper resource management."""
@@ -88,21 +100,19 @@ class LocalOrchestratorTray(rumps.App):
             with open(self.config_path, 'w') as f:
                 yaml.dump({}, f, default_flow_style=False)
 
+    def _start_menu_updates(self):
+        """Start periodic menu updates."""
+        # Update immediately
+        self._update_menu()
+        # Schedule periodic updates
+        rumps.Timer(self._update_menu, 5).start()  # Update every 5 seconds
+
     def _update_menu(self, _=None):
         """Update menu items with current connection status."""
         status = self.telegram_client.get_connection_status()
-
-        # Create dynamic menu based on connection status
-        self.menu = [
-            "Open configuration",
-            None,  # Separator
-            f"Telegram: {status}",
-            None,  # Separator
-            "Quit"
-        ]
-
-        # Schedule next update
-        rumps.Timer(self._update_menu, 5).start()  # Update every 5 seconds
+        
+        # Update the telegram status menu item
+        self.telegram_status_item.title = f"Telegram: {status}"
 
     @rumps.clicked("Open configuration")
     def open_configuration(self, _):

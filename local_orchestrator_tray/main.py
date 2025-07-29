@@ -46,6 +46,13 @@ class LocalOrchestratorTray(rumps.App):
 
     def _find_icon_path(self):
         """Find the tray icon using proper resource management."""
+        # First check if we're in a py2app bundle
+        if hasattr(sys, 'frozen') and sys.frozen:
+            # py2app bundles resources in Contents/Resources/
+            bundle_path = Path(sys.executable).parent.parent / 'Resources' / 'assets' / 'tray-icon.png'
+            if bundle_path.exists():
+                return str(bundle_path)
+        
         try:
             # Python 3.9+ approach using importlib.resources
             from importlib import resources

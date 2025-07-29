@@ -41,6 +41,7 @@ class LocalOrchestratorTray(rumps.App):
             self.telegram_status_item,
             None,  # Separator
             "Open configuration",
+            "Open log file",
             None,  # Separator
             "Quit"
         ]
@@ -118,6 +119,27 @@ class LocalOrchestratorTray(rumps.App):
     def open_configuration(self, _):
         """Open configuration file in default editor."""
         os.system(f'open "{self.config_path}"')
+    
+    @rumps.clicked("Open log file")
+    def open_log_file(self, _):
+        """Open the Telegram debug log file in default editor."""
+        try:
+            log_file_path = self.telegram_client.get_log_file_path()
+            if log_file_path.exists():
+                os.system(f'open "{log_file_path}"')
+            else:
+                # Show notification if log file doesn't exist yet
+                rumps.notification(
+                    title="Local Orchestrator",
+                    subtitle="Log file not found",
+                    message="No log file has been created yet. Send a message to the Telegram bot to generate logs."
+                )
+        except Exception as e:
+            rumps.notification(
+                title="Local Orchestrator",
+                subtitle="Error opening log",
+                message=f"Failed to open log file: {e}"
+            )
 
     def cleanup(self):
         """Clean up resources before shutdown."""

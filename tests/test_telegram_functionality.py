@@ -417,6 +417,10 @@ directory = "/home"
 name = "test"
 """
             mock_message.reply_text = AsyncMock()
+            mock_message.chat.id = 12345  # Private chat
+            mock_message.chat.type = "private"
+            mock_message.from_user.first_name = "TestUser"
+            mock_message.from_user.id = 12345
 
             mock_update = Mock()
             mock_update.message = mock_message
@@ -448,6 +452,10 @@ name = "test"
 param = "value"
 """
         mock_message.reply_text = AsyncMock()
+        mock_message.chat.id = 12345  # Private chat
+        mock_message.chat.type = "private"
+        mock_message.from_user.first_name = "TestUser"
+        mock_message.from_user.id = 12345
 
         mock_update = Mock()
         mock_update.message = mock_message
@@ -463,6 +471,288 @@ param = "value"
         assert "not found" in call_args
         assert "Built-in actions" in call_args
         assert "Custom actions" in call_args
+
+
+class TestTelegramGroupsSupport:
+    """Test Telegram groups support functionality (Issue #10)."""
+
+    @pytest.fixture
+    def test_config_with_groups(self):
+        """Create a test configuration with groups support."""
+        config_data = {
+            'telegram': {
+                'bot_token': 'test_token_123',
+                'groups': [-1234, -5678]  # Test group IDs
+            },
+            'actions': {
+                'hello': {
+                    'command': 'echo',
+                    'description': 'Print hello message'
+                }
+            }
+        }
+
+        temp_file = tempfile.NamedTemporaryFile(
+            mode='w', suffix='.yaml', delete=False)
+        yaml.dump(config_data, temp_file, default_flow_style=False)
+        temp_file.close()
+
+        yield Path(temp_file.name)
+
+        # Cleanup
+        Path(temp_file.name).unlink()
+
+    def test_groups_config_validation_valid(self, test_config_with_groups):
+        """Test that valid groups configuration passes validation."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
+
+            client = TelegramClient(test_config_with_groups)
+            
+            # Should be valid with groups array
+            assert client.config_valid is True
+            assert client.config_error is None
+            
+            # Should have groups in config
+            assert 'groups' in client.config['telegram']
+            assert client.config['telegram']['groups'] == [-1234, -5678]
+
+    def test_groups_config_validation_invalid_type(self):
+        """Test that invalid groups configuration fails validation."""
+        config_data = {
+            'telegram': {
+                'bot_token': 'test_token_123',
+                'groups': 'not-a-list'  # Invalid: should be a list
+            },
+            'actions': {}
+        }
+
+        temp_file = tempfile.NamedTemporaryFile(
+            mode='w', suffix='.yaml', delete=False)
+        yaml.dump(config_data, temp_file, default_flow_style=False)
+        temp_file.close()
+
+        try:
+            # Import directly from the module to avoid main.py import
+            sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+            from telegram_client import TelegramClient
+
+            with patch('telegram_client.Update'), \
+                    patch('telegram_client.Application'), \
+                    patch('telegram_client.MessageHandler'), \
+                    patch('telegram_client.filters'), \
+                    patch('telegram_client.ContextTypes'):
+
+                client = TelegramClient(Path(temp_file.name))
+                
+                # Should be invalid with non-list groups
+                assert client.config_valid is False
+                assert "groups must be a list" in client.config_error
+
+        finally:
+            # Cleanup
+            Path(temp_file.name).unlink()
+
+    def test_groups_config_validation_invalid_group_ids(self):
+        """Test that invalid group IDs fail validation."""
+        config_data = {
+            'telegram': {
+                'bot_token': 'test_token_123',
+                'groups': ['not-a-number', -1234]  # Invalid: should be integers
+            },
+            'actions': {}
+        }
+
+        temp_file = tempfile.NamedTemporaryFile(
+            mode='w', suffix='.yaml', delete=False)
+        yaml.dump(config_data, temp_file, default_flow_style=False)
+        temp_file.close()
+
+        try:
+            # Import directly from the module to avoid main.py import
+            sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))  
+            from telegram_client import TelegramClient
+
+            with patch('telegram_client.Update'), \
+                    patch('telegram_client.Application'), \
+                    patch('telegram_client.MessageHandler'), \
+                    patch('telegram_client.filters'), \
+                    patch('telegram_client.ContextTypes'):
+
+                client = TelegramClient(Path(temp_file.name))
+                
+                # Should be invalid with non-integer group IDs
+                assert client.config_valid is False
+                assert "group IDs must be integers" in client.config_error
+
+        finally:
+            # Cleanup
+            Path(temp_file.name).unlink()
+
+    @pytest.mark.asyncio
+    async def test_group_message_handling(self, test_config_with_groups):
+        """Test handling messages from configured groups."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
+                patch('subprocess.run') as mock_run:
+
+            # Mock successful command execution
+            mock_run.return_value = Mock(
+                stdout="hello group",
+                stderr="",
+                returncode=0
+            )
+
+            client = TelegramClient(test_config_with_groups)
+
+            # Mock group message
+            mock_message = Mock()
+            mock_message.text = """
+[hello]
+name = "group-test"
+"""
+            mock_message.reply_text = AsyncMock()
+            mock_message.chat.id = -1234  # Configured group ID
+            mock_message.chat.type = "group"
+            mock_message.from_user.first_name = "TestUser"
+            mock_message.from_user.id = 12345
+
+            mock_update = Mock()
+            mock_update.message = mock_message
+
+            mock_context = Mock()
+
+            # Test group message handling
+            await client.handle_message(mock_update, mock_context)
+
+            # Verify reply was sent (group message should be processed)
+            mock_message.reply_text.assert_called_once()
+            call_args = mock_message.reply_text.call_args[0][0]
+            assert "hello" in call_args
+            assert "completed" in call_args
+
+    @pytest.mark.asyncio  
+    async def test_unauthorized_group_message_ignored(self, test_config_with_groups):
+        """Test that messages from unconfigured groups are ignored.""" 
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
+                patch('subprocess.run') as mock_run:
+
+            client = TelegramClient(test_config_with_groups)
+
+            # Mock message from unconfigured group
+            mock_message = Mock()
+            mock_message.text = """
+[hello]
+name = "unauthorized"
+"""
+            mock_message.reply_text = AsyncMock()
+            mock_message.chat.id = -9999  # NOT in configured groups
+            mock_message.chat.type = "group" 
+            mock_message.from_user.first_name = "TestUser"
+            mock_message.from_user.id = 12345
+
+            mock_update = Mock()
+            mock_update.message = mock_message
+
+            mock_context = Mock()
+
+            # Test unauthorized group message handling
+            await client.handle_message(mock_update, mock_context)
+
+            # Verify NO reply was sent (unauthorized group should be ignored)
+            mock_message.reply_text.assert_not_called()
+            # Verify NO command was executed
+            mock_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_private_message_still_works(self, test_config_with_groups):
+        """Test that private messages still work when groups are configured."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
+                patch('subprocess.run') as mock_run:
+
+            # Mock successful command execution
+            mock_run.return_value = Mock(
+                stdout="hello private",
+                stderr="",
+                returncode=0
+            )
+
+            client = TelegramClient(test_config_with_groups)
+
+            # Mock private message
+            mock_message = Mock()
+            mock_message.text = """
+[hello]
+name = "private-test"
+"""
+            mock_message.reply_text = AsyncMock()
+            mock_message.chat.id = 54321  # Positive ID = private chat
+            mock_message.chat.type = "private"
+            mock_message.from_user.first_name = "TestUser"
+            mock_message.from_user.id = 54321
+
+            mock_update = Mock()
+            mock_update.message = mock_message
+
+            mock_context = Mock()
+
+            # Test private message handling
+            await client.handle_message(mock_update, mock_context)
+
+            # Verify reply was sent (private messages should always work)
+            mock_message.reply_text.assert_called_once()
+            call_args = mock_message.reply_text.call_args[0][0]
+            assert "hello" in call_args
+            assert "completed" in call_args
+
+    def test_groups_status_reporting(self, test_config_with_groups):
+        """Test that groups configuration affects status reporting."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
+
+            client = TelegramClient(test_config_with_groups)
+            
+            # Should report groups information in debug stats
+            stats = client.get_debug_stats()
+            assert 'groups_configured' in stats
+            assert stats['groups_configured'] == 2  # Two groups configured
 
 
 class TestIntegration:

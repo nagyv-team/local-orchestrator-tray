@@ -20,14 +20,22 @@ In a few seconds, you should see that Telegram status to be connected in the app
 
 ### Add bot to a group
 
+1. Add your bot to the desired Telegram group
 1. Find out the group ID (e.g. `curl https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getUpdates | jq -r '.result[].message.chat.id'`)
-1. Add the group id to the `telegram.groups` list
+1. Add the group ID to the `telegram.groups` list in your configuration file
+1. Save the configuration and restart the app
+
+**Note:** Group IDs are negative numbers (e.g., `-123456789`). The bot will only respond to messages from groups explicitly listed in the configuration.
 
 ## Usage
 
-Send a message to a chat that the bot can read. The message should have a TOML table format for the app to parse it. 
+Send a message to a chat that the bot can read (either direct messages or configured groups). The message should have a TOML table format for the app to parse it. 
 The table name is the action name. The table attributes are key-value pairs passed to the action.
 When getting an unrecognized action, the system responds with a list of all the available actions.
+
+**Security:** For privacy and security, the bot will only respond to:
+- Direct/private messages (always allowed)
+- Group messages from groups explicitly configured in `telegram.groups`
 
 Possible example messages:
 

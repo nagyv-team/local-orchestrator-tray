@@ -259,6 +259,23 @@ class TelegramClient:
             else:
                 logger.debug(f"Bot token found, length: {len(bot_token)} characters")
 
+            # Check groups section if it exists
+            groups_config = telegram_config.get('groups')
+            if groups_config is not None:
+                logger.debug(f"Groups config: {groups_config}")
+                if not isinstance(groups_config, list):
+                    self.config_error = "Telegram groups must be a list of group IDs"
+                    logger.error(f"Config validation failed: {self.config_error}")
+                    return
+                
+                # Validate that all group IDs are integers
+                for group_id in groups_config:
+                    if not isinstance(group_id, int):
+                        self.config_error = "All group IDs must be integers"
+                        logger.error(f"Config validation failed: {self.config_error}")
+                        return
+                logger.debug(f"Groups validation passed: {len(groups_config)} groups configured")
+
             # Check actions section if it exists
             actions_config = self.config.get('actions', {})
             logger.debug(f"Actions config: {list(actions_config.keys()) if isinstance(actions_config, dict) else 'invalid'}")
@@ -468,6 +485,27 @@ class TelegramClient:
             except Exception as e:
                 logger.error(f"Error during application shutdown: {e}")
 
+    def _is_message_authorized(self, message) -> bool:
+        """Check if message is from an authorized chat (private or configured group)."""
+        chat_id = message.chat.id
+        chat_type = message.chat.type
+        
+        # Private messages are always authorized
+        if chat_type == "private":
+            logger.debug(f"Private message authorized from chat {chat_id}")
+            return True
+        
+        # For group messages, check if group is configured
+        if chat_type in ["group", "supergroup"]:
+            configured_groups = self.config.get('telegram', {}).get('groups', [])
+            is_authorized = chat_id in configured_groups
+            logger.debug(f"Group message from {chat_id}, authorized: {is_authorized} (configured: {configured_groups})")
+            return is_authorized
+        
+        # Unknown chat types are not authorized
+        logger.warning(f"Unknown chat type '{chat_type}' from chat {chat_id}, not authorized")
+        return False
+
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle incoming Telegram messages."""
         self.message_count += 1
@@ -481,6 +519,11 @@ class TelegramClient:
         logger.info(f"[MSG #{self.message_count}] Received from {user_info} in {chat_info}")
         logger.info(f"[MSG #{self.message_count}] Message length: {len(text)} characters")
         logger.debug(f"[MSG #{self.message_count}] Full message: {text[:500]}{'...' if len(text) > 500 else ''}")
+
+        # Check if message is from authorized chat
+        if not self._is_message_authorized(message):
+            logger.info(f"[MSG #{self.message_count}] Message from unauthorized chat {message.chat.id} ({message.chat.type}), ignoring")
+            return
 
         try:
             # Parse TOML content
@@ -695,6 +738,7 @@ class TelegramClient:
 
     def get_debug_stats(self) -> Dict[str, Any]:
         """Get debugging statistics."""
+        configured_groups = self.config.get('telegram', {}).get('groups', [])
         return {
             'message_count': self.message_count,
             'error_count': self.error_count,
@@ -702,5 +746,6 @@ class TelegramClient:
             'connection_status': self.connection_status,
             'config_valid': self.config_valid,
             'actions_registered': len(self.action_registry.actions),
+            'groups_configured': len(configured_groups),
             'running': self.running
         }

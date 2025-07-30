@@ -20,8 +20,9 @@ In a few seconds, you should see that Telegram status to be connected in the app
 
 ### Add bot to a group
 
+1. Make sure that your group can read all the group messages. You can edit the bot's settings with @BotFather. You can check with `curl -X GET "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getMe" | jq .result.can_read_all_group_messages`
 1. Find out the group ID (e.g. `curl https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getUpdates | jq -r '.result[].message.chat.id'`)
-1. Add the group id to the `telegram.groups` list
+1. Make the bot a group admin so they can see messages
 
 ## Usage
 

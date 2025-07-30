@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
-
     - name: Create Release
       uses: actions/create-release@v1
       env:
@@ -35,10 +33,6 @@ jobs:
           ## System Requirements
           - macOS: 10.14+ (for app bundle)
           - Python: 3.8+ (for pip installation)
-          
-          ---
-          
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v0.0.0...${{ steps.get_version.outputs.version }}
         draft: false
         prerelease: false
 

@@ -14,7 +14,7 @@ import sys
 import os
 
 # Add the project root to the path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Mock rumps before any imports that might trigger it
@@ -25,7 +25,7 @@ sys.modules['rumps'] = Mock()
 def mock_telegram():
     """Mock the telegram library components."""
     # Ensure module path is set
-    sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
     
     with patch('telegram_client.Update'), \
             patch('telegram_client.Application') as mock_app_class, \
@@ -98,7 +98,7 @@ class TestActionRegistry:
     def test_action_registration(self):
         """Test registering and retrieving actions."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import ActionRegistry
 
         registry = ActionRegistry()
@@ -124,7 +124,7 @@ class TestActionRegistry:
     def test_action_listing(self):
         """Test listing available actions."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import ActionRegistry
 
         registry = ActionRegistry()
@@ -154,7 +154,7 @@ class TestTelegramClient:
     def test_config_loading(self, test_config):
         """Test configuration loading."""
         # Import directly from the module to avoid main.py import  
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \
@@ -181,7 +181,7 @@ class TestTelegramClient:
     def test_toml_parsing(self, test_config):
         """Test TOML message parsing."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \
@@ -223,7 +223,7 @@ directory = "/home"
     async def test_action_execution(self, test_config):
         """Test action execution with parameters."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \
@@ -258,7 +258,7 @@ directory = "/home"
     async def test_action_execution_with_params(self, test_config):
         """Test action execution with parameters."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \
@@ -295,7 +295,7 @@ directory = "/home"
     def test_connection_status(self, test_config):
         """Test connection status tracking."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \
@@ -321,7 +321,7 @@ directory = "/home"
     async def test_message_handling(self, test_config, mock_telegram):
         """Test complete message handling flow."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('subprocess.run') as mock_run:
@@ -360,7 +360,7 @@ name = "test"
     async def test_message_handling_unknown_action(self, test_config, mock_telegram):
         """Test handling of unknown actions."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         client = TelegramClient(test_config)
@@ -394,7 +394,7 @@ class TestIntegration:
 
     def test_configuration_example(self):
         """Test that the example configuration is valid."""
-        config_path = Path(__file__).parent / "example-config.yaml"
+        config_path = Path(__file__).parent.parent / "example-config.yaml"
         assert config_path.exists(), "Example config file should exist"
 
         with open(config_path, 'r') as f:
@@ -412,7 +412,7 @@ class TestIntegration:
     def test_headless_operation(self, test_config):
         """Test that the system works without GUI dependencies."""
         # Import directly from the module to avoid main.py import
-        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
         from telegram_client import TelegramClient
 
         with patch('telegram_client.Update'), \

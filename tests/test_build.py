@@ -29,7 +29,7 @@ def run_command(cmd, cwd=None):
 
 def test_build_and_install():
     """Test building and installing the package."""
-    project_root = Path(__file__).parent
+    project_root = Path(__file__).parent.parent
     
     print("Testing build and install process...")
     
@@ -37,7 +37,7 @@ def test_build_and_install():
     if platform.system() != 'Darwin':
         print("⚠️  Skipping installation test - requires macOS for rumps dependencies")
         print("✅ Build-only test mode on non-macOS platform")
-        return test_build_only(project_root)
+        return _build_only_logic(project_root)
     
     # Clean any existing build artifacts
     print("\n1. Cleaning build artifacts...")
@@ -91,8 +91,8 @@ def test_build_and_install():
     return True
 
 
-def test_build_only(project_root):
-    """Test only the build process without installation (for non-macOS platforms)."""
+def _build_only_logic(project_root):
+    """Internal logic for build-only testing."""
     print("\n1. Cleaning build artifacts...")
     for dir_name in ["build", "dist", "*.egg-info"]:
         for path in project_root.glob(dir_name):
@@ -115,6 +115,12 @@ def test_build_only(project_root):
     print("✅ Package built successfully")
     print("\n🎉 Build test passed! Package builds correctly on this platform.")
     return True
+
+
+def test_build_only():
+    """Test only the build process without installation (for non-macOS platforms)."""
+    project_root = Path(__file__).parent.parent
+    return _build_only_logic(project_root)
 
 
 if __name__ == "__main__":

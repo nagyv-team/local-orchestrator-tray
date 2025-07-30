@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(setup.sh)",
+      "Bash(gh issue view:*)",
+      "Bash(git checkout:*)",
+      "Bash(pytest:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "memory-coder",
+    "memory-tester",
+    "memory-cicd",
+    "memory-planner"
+  ]
+}

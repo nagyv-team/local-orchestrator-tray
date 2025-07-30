@@ -87,7 +87,6 @@ jobs:
       with:
         name: macos-app
         path: |
-          dist/Local Orchestrator Tray.app/
           Local-Orchestrator-Tray*.dmg
           Local-Orchestrator-Tray-macOS.zip
         retention-days: 30

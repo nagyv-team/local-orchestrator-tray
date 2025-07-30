@@ -32,7 +32,7 @@ jobs:
           
           ## System Requirements
           - macOS: 10.14+ (for app bundle)
-          - Python: 3.8+ (for pip installation)
+          - Python: 3.12+ (for pip installation)
         draft: false
         prerelease: false
 

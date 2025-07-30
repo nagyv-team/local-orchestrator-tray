@@ -17,15 +17,21 @@ import os
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# Mock rumps before any imports that might trigger it
+sys.modules['rumps'] = Mock()
+
 
 @pytest.fixture
 def mock_telegram():
     """Mock the telegram library components."""
-    with patch('local_orchestrator_tray.telegram_client.Update'), \
-            patch('local_orchestrator_tray.telegram_client.Application') as mock_app_class, \
-            patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-            patch('local_orchestrator_tray.telegram_client.filters'), \
-            patch('local_orchestrator_tray.telegram_client.ContextTypes'):
+    # Ensure module path is set
+    sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+    
+    with patch('telegram_client.Update'), \
+            patch('telegram_client.Application') as mock_app_class, \
+            patch('telegram_client.MessageHandler'), \
+            patch('telegram_client.filters'), \
+            patch('telegram_client.ContextTypes'):
 
         # Mock the Application instance
         mock_app = Mock()
@@ -91,7 +97,9 @@ class TestActionRegistry:
 
     def test_action_registration(self):
         """Test registering and retrieving actions."""
-        from local_orchestrator_tray.telegram_client import ActionRegistry
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import ActionRegistry
 
         registry = ActionRegistry()
 
@@ -115,7 +123,9 @@ class TestActionRegistry:
 
     def test_action_listing(self):
         """Test listing available actions."""
-        from local_orchestrator_tray.telegram_client import ActionRegistry
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import ActionRegistry
 
         registry = ActionRegistry()
 
@@ -143,13 +153,15 @@ class TestTelegramClient:
 
     def test_config_loading(self, test_config):
         """Test configuration loading."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import  
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'):
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
 
             client = TelegramClient(test_config)
 
@@ -168,13 +180,15 @@ class TestTelegramClient:
 
     def test_toml_parsing(self, test_config):
         """Test TOML message parsing."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'):
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
 
             client = TelegramClient(test_config)
 
@@ -208,13 +222,15 @@ directory = "/home"
     @pytest.mark.asyncio
     async def test_action_execution(self, test_config):
         """Test action execution with parameters."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'), \
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
                 patch('subprocess.run') as mock_run:
 
             # Mock successful command execution
@@ -241,13 +257,15 @@ directory = "/home"
     @pytest.mark.asyncio
     async def test_action_execution_with_params(self, test_config):
         """Test action execution with parameters."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'), \
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
                 patch('subprocess.run') as mock_run:
 
             # Mock successful command execution
@@ -276,13 +294,15 @@ directory = "/home"
 
     def test_connection_status(self, test_config):
         """Test connection status tracking."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'):
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
 
             client = TelegramClient(test_config)
 
@@ -300,7 +320,9 @@ directory = "/home"
     @pytest.mark.asyncio
     async def test_message_handling(self, test_config, mock_telegram):
         """Test complete message handling flow."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
         with patch('subprocess.run') as mock_run:
             # Mock successful command execution
@@ -337,7 +359,9 @@ name = "test"
     @pytest.mark.asyncio
     async def test_message_handling_unknown_action(self, test_config, mock_telegram):
         """Test handling of unknown actions."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
         client = TelegramClient(test_config)
 
@@ -361,7 +385,8 @@ param = "value"
         mock_message.reply_text.assert_called_once()
         call_args = mock_message.reply_text.call_args[0][0]
         assert "not found" in call_args
-        assert "Available actions" in call_args
+        assert "Built-in actions" in call_args
+        assert "Custom actions" in call_args
 
 
 class TestIntegration:
@@ -386,13 +411,15 @@ class TestIntegration:
 
     def test_headless_operation(self, test_config):
         """Test that the system works without GUI dependencies."""
-        from local_orchestrator_tray.telegram_client import TelegramClient
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
 
-        with patch('local_orchestrator_tray.telegram_client.Update'), \
-                patch('local_orchestrator_tray.telegram_client.Application'), \
-                patch('local_orchestrator_tray.telegram_client.MessageHandler'), \
-                patch('local_orchestrator_tray.telegram_client.filters'), \
-                patch('local_orchestrator_tray.telegram_client.ContextTypes'):
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'):
 
             # Should be able to create client without GUI
             client = TelegramClient(test_config)

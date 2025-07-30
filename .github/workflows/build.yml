@@ -35,18 +35,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run build tests (non-macOS)
-      if: runner.os != 'macOS'
+    - name: Run tests (non-macOS)
       run: |
-        python test_build.py
-
-    - name: Run packaging tests
-      run: |
-        python test_packaging_validation.py
-
-    - name: Run application startup tests
-      run: |
-        python test_telegram_functionality.py
+        pytest
 
   build-macos-app:
     name: Build macOS App Bundle

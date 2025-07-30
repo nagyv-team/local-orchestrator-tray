@@ -4,7 +4,7 @@ A Mac app that sits in the system tray and listens for events in a Telegram chat
 ## Local build
 
 ```
-nix-shell -p pkgs.python3 pkgs.python312Packages.pip
+nix-shell -p pkgs.python312 pkgs.python312Packages.pip
 rm -rf build dist
 pip -m venv .venv
 source .venv/bin/activate

@@ -23,6 +23,10 @@ except ImportError:
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+try:
+    import rumps
+except ImportError:
+    rumps = None  # rumps might not be available in all environments
 
 
 # Configure logging with file handler and formatting
@@ -67,6 +71,74 @@ LOG_FILE_PATH = setup_logging()
 logger = logging.getLogger(__name__)
 
 
+class BuiltInActionRegistry:
+    """Registry for built-in actions that start with uppercase letters."""
+
+    def __init__(self):
+        self.actions: Dict[str, Dict[str, Any]] = {
+            'Notification': {
+                'handler': self._handle_notification,
+                'description': 'Show a system notification with message and optional title',
+                'required_params': ['message'],
+                'optional_params': ['title']
+            }
+        }
+        logger.info(f"BuiltInActionRegistry initialized with {len(self.actions)} built-in actions")
+
+    def get_action(self, name: str) -> Optional[Dict[str, Any]]:
+        """Get built-in action configuration by name."""
+        return self.actions.get(name)
+
+    def list_actions(self) -> List[str]:
+        """Get list of available built-in action names."""
+        return list(self.actions.keys())
+
+    def is_built_in_action(self, name: str) -> bool:
+        """Check if name corresponds to a built-in action."""
+        return name in self.actions
+
+    async def _handle_notification(self, params: Dict[str, Any]) -> str:
+        """Handle Notification built-in action."""
+        message = params.get('message')
+        title = params.get('title', 'Local Orchestrator')
+        
+        if not message:
+            raise ValueError("Notification action requires 'message' parameter")
+        
+        logger.info(f"Showing notification: title='{title}', message='{message}'")
+        
+        if rumps:
+            rumps.notification(
+                title=title,
+                subtitle="",
+                message=str(message)
+            )
+            return f"Notification shown: {title} - {message}"
+        else:
+            # Fallback for environments without rumps
+            logger.warning("rumps not available, notification not shown")
+            return f"Notification would show: {title} - {message} (rumps not available)"
+
+    def get_actions_description(self) -> str:
+        """Get formatted description of all built-in actions."""
+        if not self.actions:
+            return "No built-in actions available."
+
+        descriptions = []
+        for name, config in self.actions.items():
+            desc = config.get('description', 'No description')
+            required = config.get('required_params', [])
+            optional = config.get('optional_params', [])
+            param_info = ""
+            if required:
+                param_info += f" (Required: {', '.join(required)})"
+            if optional:
+                param_info += f" (Optional: {', '.join(optional)})"
+            descriptions.append(f"• **{name}**: {desc}{param_info}")
+
+        return "Built-in actions:\n" + "\n".join(descriptions)
+
+
 class ActionRegistry:
     """Registry for managing available actions."""
 
@@ -93,14 +165,14 @@ class ActionRegistry:
     def get_actions_description(self) -> str:
         """Get formatted description of all available actions."""
         if not self.actions:
-            return "No actions are currently configured."
+            return "No custom actions are currently configured."
 
         descriptions = []
         for name, config in self.actions.items():
             desc = config.get('description', 'No description')
             descriptions.append(f"• **{name}**: {desc}")
 
-        return "Available actions:\n" + "\n".join(descriptions)
+        return "Custom actions:\n" + "\n".join(descriptions)
 
 
 class TelegramClient:
@@ -109,6 +181,7 @@ class TelegramClient:
     def __init__(self, config_path: Path):
         self.config_path = config_path
         self.config = {}
+        self.built_in_action_registry = BuiltInActionRegistry()
         self.action_registry = ActionRegistry()
         self.connection_status = "disconnected"
         self.application: Optional[Application] = None
@@ -197,6 +270,13 @@ class TelegramClient:
             # Validate each action
             for action_name, action_config in actions_config.items():
                 logger.debug(f"Validating action '{action_name}': {action_config}")
+                
+                # Check if action name starts with uppercase letter (reserved for built-in actions)
+                if action_name and action_name[0].isupper():
+                    self.config_error = f"Action '{action_name}' starts with uppercase letter, which is reserved for built-in actions"
+                    logger.error(f"Config validation failed: {self.config_error}")
+                    return
+                
                 if not isinstance(action_config, dict):
                     self.config_error = f"Action '{action_name}' must be a dictionary"
                     logger.error(f"Config validation failed: {self.config_error}")
@@ -456,22 +536,38 @@ class TelegramClient:
                 logger.debug(f"Skipping section '{section_name}' - not a dictionary")
                 continue
 
-            # Check if action exists
+            # Check built-in actions first (uppercase names)
+            if self.built_in_action_registry.is_built_in_action(section_name):
+                logger.info(f"Executing built-in action '{section_name}' with parameters: {section_data}")
+                try:
+                    result = await self.execute_built_in_action(section_name, section_data)
+                    logger.info(f"Built-in action '{section_name}' completed successfully, result: {result}")
+                    await message.reply_text(f"✅ Built-in action '{section_name}' completed: {result}")
+                except Exception as e:
+                    logger.error(f"Built-in action '{section_name}' failed: {e}")
+                    logger.error(f"Built-in action failure details: {traceback.format_exc()}")
+                    await message.reply_text(f"❌ Built-in action '{section_name}' failed: {e}")
+                continue
+            
+            # Check custom actions
             action_config = self.action_registry.get_action(section_name)
             if not action_config:
-                logger.warning(f"Action '{section_name}' not found in registry")
+                logger.warning(f"Action '{section_name}' not found in any registry")
+                # Get combined actions description
+                built_in_desc = self.built_in_action_registry.get_actions_description()
+                custom_desc = self.action_registry.get_actions_description()
+                combined_desc = f"{built_in_desc}\n\n{custom_desc}"
                 await message.reply_text(
-                    f"Action '{section_name}' not found.\n\n" +
-                    self.action_registry.get_actions_description()
+                    f"Action '{section_name}' not found.\n\n{combined_desc}"
                 )
                 continue
 
-            logger.info(f"Executing action '{section_name}' with parameters: {section_data}")
+            logger.info(f"Executing custom action '{section_name}' with parameters: {section_data}")
             
-            # Execute the action
+            # Execute the custom action
             try:
                 result = await self.execute_action(action_config, section_data)
-                logger.info(f"Action '{section_name}' completed successfully, result length: {len(result)} chars")
+                logger.info(f"Custom action '{section_name}' completed successfully, result length: {len(result)} chars")
                 
                 if result.strip():
                     # Truncate long results for Telegram
@@ -479,16 +575,16 @@ class TelegramClient:
                     if len(result) > max_length:
                         truncated_result = result[:max_length] + "\n\n[Output truncated - see logs for full result]"
                         logger.debug(f"Truncated result from {len(result)} to {len(truncated_result)} characters")
-                        await message.reply_text(f"✅ Action '{section_name}' completed:\n```\n{truncated_result}\n```")
+                        await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{truncated_result}\n```")
                     else:
-                        await message.reply_text(f"✅ Action '{section_name}' completed:\n```\n{result}\n```")
+                        await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{result}\n```")
                 else:
-                    await message.reply_text(f"✅ Action '{section_name}' completed successfully")
+                    await message.reply_text(f"✅ Custom action '{section_name}' completed successfully")
                     
             except Exception as e:
-                logger.error(f"Action '{section_name}' failed: {e}")
-                logger.error(f"Action failure details: {traceback.format_exc()}")
-                await message.reply_text(f"❌ Action '{section_name}' failed: {e}")
+                logger.error(f"Custom action '{section_name}' failed: {e}")
+                logger.error(f"Custom action failure details: {traceback.format_exc()}")
+                await message.reply_text(f"❌ Custom action '{section_name}' failed: {e}")
 
     async def execute_action(self, action_config: Dict[str, Any], params: Dict[str, Any]) -> str:
         """Execute an action with given parameters."""
@@ -548,6 +644,27 @@ class TelegramClient:
             logger.error(f"Command execution failed after {execution_time:.2f}s: {e}")
             logger.error(f"Exception details: {traceback.format_exc()}")
             raise Exception(f"Failed to execute command: {e}")
+    
+    async def execute_built_in_action(self, action_name: str, params: Dict[str, Any]) -> str:
+        """Execute a built-in action with given parameters."""
+        action_config = self.built_in_action_registry.get_action(action_name)
+        if not action_config:
+            raise Exception(f"Built-in action '{action_name}' not found")
+        
+        handler = action_config.get('handler')
+        if not handler:
+            raise Exception(f"Built-in action '{action_name}' has no handler")
+        
+        logger.debug(f"Executing built-in action '{action_name}' with params: {params}")
+        
+        # Validate required parameters
+        required_params = action_config.get('required_params', [])
+        for param in required_params:
+            if param not in params:
+                raise ValueError(f"Built-in action '{action_name}' requires parameter '{param}'")
+        
+        # Execute the handler
+        return await handler(params)
     
     def get_log_file_path(self) -> Path:
         """Get the path to the log file."""

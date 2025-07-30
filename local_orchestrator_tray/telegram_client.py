@@ -599,7 +599,7 @@ class TelegramClient:
         args = []
         for key, value in params.items():
             # Convert camelCase to kebab-case for CLI args
-            cli_key = key.replace('_', '-').lower()
+            cli_key = self._camel_to_kebab(key)
             args.extend([f'--{cli_key}', str(value)])
             logger.debug(f"Added arg: --{cli_key} {value}")
 
@@ -670,6 +670,29 @@ class TelegramClient:
         """Get the path to the log file."""
         return LOG_FILE_PATH
     
+    def _camel_to_kebab(self, name: str) -> str:
+        """Convert camelCase/snake_case to kebab-case for CLI arguments.
+        
+        Fixes issue #8: myKey should become --my-key, not --mykey
+        
+        Args:
+            name: Parameter name in camelCase, snake_case, or kebab-case
+            
+        Returns:
+            Kebab-case string suitable for CLI arguments
+            
+        Examples:
+            - myKey -> my-key
+            - dayOfYear -> day-of-year
+            - snake_case -> snake-case
+            - already-kebab -> already-kebab
+        """
+        import re
+        # Insert hyphens before uppercase letters (but not at the start)
+        s1 = re.sub('([a-z0-9])([A-Z])', r'\1-\2', name)
+        # Convert underscores to hyphens and make lowercase
+        return s1.replace('_', '-').lower()
+
     def get_debug_stats(self) -> Dict[str, Any]:
         """Get debugging statistics."""
         return {

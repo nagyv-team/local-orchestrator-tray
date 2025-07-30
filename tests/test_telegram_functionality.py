@@ -292,6 +292,82 @@ directory = "/home"
             assert '--count' in call_args
             assert '2' in call_args
 
+    @pytest.mark.asyncio
+    async def test_camel_case_to_kebab_case_conversion(self, test_config):
+        """Test that camelCase parameters are converted to kebab-case CLI args (issue #8)."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('telegram_client.Update'), \
+                patch('telegram_client.Application'), \
+                patch('telegram_client.MessageHandler'), \
+                patch('telegram_client.filters'), \
+                patch('telegram_client.ContextTypes'), \
+                patch('subprocess.run') as mock_run:
+
+            # Mock successful command execution
+            mock_run.return_value = Mock(
+                stdout="command executed",
+                stderr="",
+                returncode=0
+            )
+
+            client = TelegramClient(test_config)
+
+            # Test cases for camelCase to kebab-case conversion
+            test_cases = [
+                ("myKey", "my-key"),
+                ("dayOfYear", "day-of-year"),
+                ("someVeryLongVariableName", "some-very-long-variable-name"),
+                ("userName", "user-name"),
+                ("firstName", "first-name"),
+                ("lastName", "last-name"),
+                ("accessToken", "access-token"),
+                ("baseUrl", "base-url"),
+                ("configFile", "config-file"),
+                ("timeStamp", "time-stamp"),
+                # Edge cases
+                ("a", "a"),  # Single letter
+                ("aB", "a-b"),  # Two letters
+                ("camelCaseExample", "camel-case-example"),
+                # Already kebab-case or snake_case should work too
+                ("already-kebab", "already-kebab"),
+                ("snake_case", "snake-case"),  # Should convert underscores
+                ("mixed_caseExample", "mixed-case-example"),  # Mixed formats
+            ]
+
+            action_config = {'command': 'echo'}
+
+            for input_param, expected_cli_arg in test_cases:
+                # Reset mock for each test case
+                mock_run.reset_mock()
+                
+                # Test with single parameter
+                params = {input_param: 'testValue'}
+                
+                await client.execute_action(action_config, params)
+                
+                # Verify the command was called with correct kebab-case argument
+                call_args = mock_run.call_args[0][0]
+                expected_flag = f'--{expected_cli_arg}'
+                
+                assert expected_flag in call_args, \
+                    f"Parameter '{input_param}' should become '{expected_flag}' but got {call_args}"
+                assert 'testValue' in call_args, \
+                    f"Parameter value should be preserved in {call_args}"
+
+            # Test the specific issue #8 example: myKey should become --my-key
+            mock_run.reset_mock()
+            params = {'myKey': 'myValue'}
+            await client.execute_action(action_config, params)
+            
+            call_args = mock_run.call_args[0][0]
+            assert '--my-key' in call_args, \
+                f"Issue #8: 'myKey' should become '--my-key' but got {call_args}"
+            assert '--mykey' not in call_args, \
+                f"Issue #8: Should NOT have '--mykey' in {call_args}"
+
     def test_connection_status(self, test_config):
         """Test connection status tracking."""
         # Import directly from the module to avoid main.py import

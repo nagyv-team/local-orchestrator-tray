@@ -147,7 +147,7 @@ jobs:
   notify:
     name: Notify Build Status
     runs-on: ubuntu-latest
-    needs: [test, build-packages, build-macos-app, security-scan]
+    needs: [test, build-macos-app]
     if: always()
     
     steps:
@@ -155,17 +155,13 @@ jobs:
       if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
       run: |
         echo "✅ All builds completed successfully!"
-        echo "- Tests passed on multiple platforms and Python versions"
-        echo "- Python packages built and validated"
+        echo "- Tests passed on Python versions"
         echo "- macOS app bundle created"
-        echo "- Security scans completed"
 
     - name: Notify failure
       if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
       run: |
         echo "❌ Build failed in one or more jobs:"
         echo "- Tests: ${{ needs.test.result }}"
-        echo "- Python packages: ${{ needs.build-packages.result }}"
         echo "- macOS app: ${{ needs.build-macos-app.result }}"
-        echo "- Security scan: ${{ needs.security-scan.result }}"
         exit 1

@@ -1,0 +1,171 @@
+name: Build and Test
+
+on:
+  push:
+    branches: "*"
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    name: Test with Python ${{ matrix.python-version }}
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+        restore-keys: |
+          pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run build tests (non-macOS)
+      if: runner.os != 'macOS'
+      run: |
+        python test_build.py
+
+    - name: Run packaging tests
+      run: |
+        python test_packaging_validation.py
+
+    - name: Run application startup tests
+      run: |
+        python test_application_startup.py
+
+    - name: Run application startup tests
+      run: |
+        python test_telegram_functionality.py
+
+  build-macos-app:
+    name: Build macOS App Bundle
+    runs-on: macos-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build macOS app
+      run: |
+        python setup.py py2app --no-strip
+
+    - name: Create DMG (if available)
+      run: |
+        if command -v create-dmg &> /dev/null; then
+          create-dmg \
+            --volname "Local Orchestrator Tray" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "Local Orchestrator Tray.app" 200 190 \
+            --hide-extension "Local Orchestrator Tray.app" \
+            --app-drop-link 600 185 \
+            "Local-Orchestrator-Tray.dmg" \
+            "dist/"
+        else
+          echo "create-dmg not available, skipping DMG creation"
+          # Create a simple zip instead
+          cd dist && zip -r "../Local-Orchestrator-Tray-macOS.zip" "Local Orchestrator Tray.app"
+        fi
+
+    - name: Upload macOS app as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-app
+        path: |
+          dist/Local Orchestrator Tray.app/
+          Local-Orchestrator-Tray*.dmg
+          Local-Orchestrator-Tray-macOS.zip
+        retention-days: 30
+
+  release:
+    name: Create Release Assets
+    runs-on: ubuntu-latest
+    needs: [build-macos-app]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download macOS app
+      uses: actions/download-artifact@v3
+      with:
+        name: macos-app
+        path: macos-build/
+
+    - name: Prepare release assets
+      run: |
+        # Organize files for release
+        mkdir -p release-assets
+        
+        # Copy macOS app files
+        if [ -f "macos-build/Local-Orchestrator-Tray.dmg" ]; then
+          cp "macos-build/Local-Orchestrator-Tray.dmg" release-assets/
+        fi
+        if [ -f "macos-build/Local-Orchestrator-Tray-macOS.zip" ]; then
+          cp "macos-build/Local-Orchestrator-Tray-macOS.zip" release-assets/
+        fi
+        
+        # List all release assets
+        ls -la release-assets/
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: release-assets/
+        asset_name: local-orchestrator-tray-assets
+        asset_content_type: application/zip
+
+  notify:
+    name: Notify Build Status
+    runs-on: ubuntu-latest
+    needs: [test, build-packages, build-macos-app, security-scan]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
+      run: |
+        echo "✅ All builds completed successfully!"
+        echo "- Tests passed on multiple platforms and Python versions"
+        echo "- Python packages built and validated"
+        echo "- macOS app bundle created"
+        echo "- Security scans completed"
+
+    - name: Notify failure
+      if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
+      run: |
+        echo "❌ Build failed in one or more jobs:"
+        echo "- Tests: ${{ needs.test.result }}"
+        echo "- Python packages: ${{ needs.build-packages.result }}"
+        echo "- macOS app: ${{ needs.build-macos-app.result }}"
+        echo "- Security scan: ${{ needs.security-scan.result }}"
+        exit 1

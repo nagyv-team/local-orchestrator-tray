@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        release_name: Local Orchestrator Tray ${{ steps.get_version.outputs.version }}
+        body: |
+          ## What's Changed
+          
+          This release includes:
+          - macOS app bundle (.app)
+          - Tested on multiple python versions
+          
+          ## Installation
+          
+          ### macOS
+          1. Download the `Local-Orchestrator-Tray.dmg` or `Local-Orchestrator-Tray-macOS.zip`
+          2. Extract and move the app to Applications folder
+          3. Run the app from Applications
+          
+          ## System Requirements
+          - macOS: 10.14+ (for app bundle)
+          - Python: 3.8+ (for pip installation)
+          
+          ---
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v0.0.0...${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
+
+  notify-release:
+    name: Notify Release Created
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always()
+    
+    steps:
+    - name: Release notification
+      run: |
+        echo "🎉 Release ${{ github.ref_name }} has been created!"
+        echo "📦 Build artifacts will be available once the build pipeline completes"
+        echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"

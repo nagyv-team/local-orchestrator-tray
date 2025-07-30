@@ -4,7 +4,7 @@ type: developer
 color: "#FF6B35"
 description: Implementation specialist for writing clean, efficient code
 capabilities:
-  - code_generation
+  - code_crafting
   - refactoring
   - optimization
   - api_design
@@ -19,10 +19,6 @@ hooks:
     fi
   post: |
     echo "✨ Implementation complete"
-    # Run basic validation
-    if [ -f "package.json" ]; then
-      npm run lint --if-present
-    fi
 ---
 
 # Code Implementation Agent

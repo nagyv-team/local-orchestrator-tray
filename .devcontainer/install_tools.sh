@@ -21,3 +21,5 @@ sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.g
 sudo apt update && sudo apt install 1password-cli
 
 uv tool install claude-monitor
+
+git config --global core.excludesfile '/home/vscode/.gitignore'

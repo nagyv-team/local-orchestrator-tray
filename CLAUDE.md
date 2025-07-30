@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Mac system tray application that listens to Telegram chats and executes local commands based on TOML-formatted messages. It uses Python with the `rumps` library for the tray interface, `py2app` for packaging a Mac compatible application, and `python-telegram-bot` for Telegram integration.
 
+## Development Process
+
+1. Always use dedicated agents for implementing issues:
+  - tdd-implementor
+  - tdd-test-writer
+2. Always provide short status reports in the GitHub issue as comments
+3. Start every issue on its dedicated branch (e.g. issue #4 -> branch: issue-4)
+
 ## Development Commands
 
 ### Environment Setup

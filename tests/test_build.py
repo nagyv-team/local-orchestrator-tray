@@ -28,7 +28,7 @@ def run_command(cmd, cwd=None):
         return False
 
 
-def test_build(project_root):
+def test_build():
     """Internal logic for build-only testing."""
     project_root = Path(__file__).parent.parent
     print("\n1. Cleaning build artifacts...")

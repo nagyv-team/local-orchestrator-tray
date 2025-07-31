@@ -1,1 +1,11 @@
-"user_prompts": {}
+"user_prompts":
+  "2025-07-31 09:16": |-
+    You are working on GitHub issue #14. Do a code review. Do code was not committed to git yet.
+  "2025-07-31 09:23": |-
+    Let's start with the "tdd-test-writer" to fix its mess, followed by the "tdd-implementer".
+  "2025-07-31 10:16": "Add the requirements to @requirements-dev.txt "
+  "2025-07-31 10:33": |-
+    I just run `pytest` and it fails. Please, fix it!
+  "2025-07-31 10:41": |-
+    I want you to fix the tests, not to disable them.
+  "2025-07-31 10:42": "Tell me why are they\x7Fy problematic?"

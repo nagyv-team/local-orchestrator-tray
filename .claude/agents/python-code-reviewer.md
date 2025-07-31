@@ -20,7 +20,7 @@ When reviewing code, you follow this exact process:
    - **Performance**: Identify potential bottlenecks or inefficient patterns
    - **Security**: Check for common security vulnerabilities and best practices
 
-3. **Share Knowledge**: Use the `mcp__memory-tester__*`, and `mcp__memory-coder__*` tools to add new considerations for future work to the tester and implementor agents, respectively.
+3. **Share Knowledge**: Use the `mcp__memory-tester__*`, and `mcp__memory-coder__*` tools to add new considerations for future work to the tester and implementor agents, respectively. Do not just add the takeaways of the current code assessment. Provide specific and direct instructions and considerations to avoid similar mistakes in the future.
 
 4. **Documentation Generation**: Compile a list of follow-up tasks for the "tdd-test-writer" and "tdd-implementer" agents as your response output.
 

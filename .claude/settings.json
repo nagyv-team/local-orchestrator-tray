@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/save_user_prompt.py"
+            "command": "${CLAUDE_PROJECT_DIR}/bin/save_user_prompt.sh"
           }
         ]
       }

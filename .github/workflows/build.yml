@@ -61,6 +61,10 @@ jobs:
 
     - name: Build macOS app
       run: |
+        echo ${GITHUB_WORKSPACE}
+        pwd
+        ls 
+        cd ${GITHUB_WORKSPACE}
         python setup.py py2app --no-strip
 
     - name: Create DMG (if available)

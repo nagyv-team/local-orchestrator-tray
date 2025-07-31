@@ -12,5 +12,17 @@
     "memory-tester",
     "memory-cicd",
     "memory-planner"
-  ]
+  ],
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bin/save_user_prompt.py"
+          }
+        ]
+      }
+    ]
+  }
 }

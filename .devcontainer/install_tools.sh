@@ -6,6 +6,8 @@ set -e
 # Example usage: https://github.com/devcontainers-extra/features/blob/main/src/direnv-asdf/install.sh
 #source ./library_scripts.sh
 
+sudo apt install uuid-runtime
+
 npm install -g @anthropic-ai/claude-code
 
 curl -sS https://downloads.1password.com/linux/keys/1password.asc | \

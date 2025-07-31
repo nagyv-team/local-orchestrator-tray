@@ -53,7 +53,7 @@ def main():
     try:
         with open(yaml_file, 'w', encoding='utf-8') as f:
             yaml.dump(data, f, default_flow_style=False,
-                      allow_unicode=True, indent=2)
+                      allow_unicode=True, indent=2, default_style='|')
     except Exception as e:
         print(f"Error writing to YAML file: {e}", file=sys.stderr)
         sys.exit(1)

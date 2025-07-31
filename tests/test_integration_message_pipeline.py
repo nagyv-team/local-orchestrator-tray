@@ -15,6 +15,7 @@ This test suite focuses on:
 """
 
 import asyncio
+import subprocess
 import tempfile
 import yaml
 import time

@@ -36,3 +36,21 @@
   "2025-07-31 18:53":
     "session_id": ""
     "user_prompt": "/troubleshooting:fix-tests "
+  "2025-07-31 20:37":
+    "session_id": ""
+    "user_prompt": "Skip the failing tests. There are 6 of them. \n\n1. Run the tests\n\
+      2. Create a TodoWrite task for every single failing test separately to mark\
+      \ them as skipped\n3. Mark one test at a time"
+  "2025-07-31 20:45":
+    "session_id": ""
+    "user_prompt": |-
+      Look for these tests only:
+
+      ============================== short test summary info ==============================
+      FAILED tests/test_integration_message_pipeline.py::TestFullMessageProcessingPipeline::test_error_handling_in_processing_pipeline - AssertionError: Scenario 'command_failure' should include 'failed' in reply
+      FAILED tests/test_security_token_validation.py::TestSensitiveDataSanitization::test_token_sanitized_in_error_messages - assert not True
+      FAILED tests/test_security_token_validation.py::TestSensitiveDataSanitization::test_config_sanitization_in_string_representation - AssertionError: Token found in: {'actions': {'test': {'command': 'echo test'}}, ...
+      FAILED tests/test_security_token_validation.py::TestSensitiveDataSanitization::test_telegram_api_errors_sanitized - AssertionError: Full token should not appear in logs
+      FAILED tests/test_security_token_validation.py::TestInputValidationSecurity::test_toml_injection_prevention - AssertionError: Dangerous pattern 'rm -rf' in command: ['echo', 'safe', '--comma...
+      FAILED tests/test_security_token_validation.py::TestSecureErrorHandling::test_stack_traces_dont_expose_tokens - AssertionError: Token leaked in stack trace
+      ========= 6 failed, 191 passed, 4 skipped, 8 warnings in 170.05s (0:02:50) ==========

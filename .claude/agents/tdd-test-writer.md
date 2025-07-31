@@ -36,6 +36,7 @@ Your core responsibilities:
 
 **Quality Assurance:**
 - Verify all tests follow project testing standards and conventions
+- No tests files are larger thatn 700 lines, and preferably contain only a single test suite
 - Ensure test coverage addresses both happy path and edge cases
 - Check that test assertions are specific and meaningful
 - Validate that tests will actually fail before implementation (red phase of TDD)

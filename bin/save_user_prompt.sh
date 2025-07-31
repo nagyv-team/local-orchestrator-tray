@@ -28,5 +28,3 @@ yq eval ".user_prompts[\"$TIMESTAMP\"] = \"$PROMPT\"" -i "$OUTPUT_YAML"
 
 # Convert the string value to literal block style for better readability
 yq eval ".user_prompts[\"$TIMESTAMP\"] style=\"literal\"" -i "$OUTPUT_YAML"
-
-echo "Prompt added to $OUTPUT_YAML with timestamp: $TIMESTAMP"

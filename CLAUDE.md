@@ -11,6 +11,7 @@ This is a Mac system tray application that listens to Telegram chats and execute
 1. Always use dedicated agents for implementing issues:
   - tdd-implementor
   - tdd-test-writer
+  - python-code-reviwer
 2. Always provide short status reports in the GitHub issue as comments
 3. Start every issue on its dedicated branch (e.g. issue #4 -> branch: issue-4)
 

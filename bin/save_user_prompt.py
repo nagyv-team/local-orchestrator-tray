@@ -47,7 +47,10 @@ def main():
         data['user_prompts'] = {}
 
     # Add the new prompt with timestamp
-    data['user_prompts'][timestamp] = user_prompt
+    data['user_prompts'][timestamp] = {
+        "session_id": os.getenv("CLAUDE_SESSION_ID"),
+        "user_prompt": user_prompt,
+    }
 
     # Write back to file
     try:

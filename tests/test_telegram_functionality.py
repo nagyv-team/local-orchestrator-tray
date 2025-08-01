@@ -480,14 +480,16 @@ param = "value"
         
         mock_telegram['updater'].start_polling.side_effect = mock_start_polling
         
-        # Execute the _async_run_client method and expect it to fail at start_polling
-        with pytest.raises(Exception, match="Test exception to exit early"):
-            await client._async_run_client()
+        # Execute the _async_run_client method - production code catches exceptions gracefully
+        await client._async_run_client()
         
         # Verify start_polling was called with the correct allowed_updates parameter
         mock_telegram['updater'].start_polling.assert_called_once_with(
             allowed_updates=["channel_post", "message"]
         )
+        
+        # Verify the error was handled gracefully (connection_status should reflect the error)
+        assert "Connection failed" in client.connection_status
 
     @pytest.mark.asyncio 
     async def test_should_handle_both_messages_and_channel_posts_when_receiving_updates(self, test_config, mock_telegram):

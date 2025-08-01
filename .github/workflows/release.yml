@@ -119,4 +119,4 @@ jobs:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
         title: "❌ Release failed"
-        message: "Release of ${ GITHUB_BASE_REF } failed"
+        message: "Release of ${ GITHUB_REF_NAME } failed"

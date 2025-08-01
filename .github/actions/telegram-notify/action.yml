@@ -22,7 +22,7 @@ runs:
       run: |
         curl -X POST "https://api.telegram.org/bot${{ inputs.telegram_bot_token }}/sendMessage" \
           -H "Content-Type: application/json" \
-          -d '{
-            "chat_id": "${{ inputs.chat_id }}",
-            "text": "[Notification]\nmessage = \"${{ inputs.message }}\"\ntitle = \"${{ inputs.title }}\"\n"
-          }'
+          -d "{
+            \"chat_id\": \"${{ inputs.chat_id }}\",
+            \"text\": \"[Notification]\nmessage = \\\"${{ inputs.message }}\\\"\ntitle = \\\"${{ inputs.title }}\\\"\n\"
+          }"

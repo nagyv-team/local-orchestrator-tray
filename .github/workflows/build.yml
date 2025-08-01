@@ -89,7 +89,7 @@ jobs:
     - name: Upload macOS app as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: macos-app
+        name: Local-Orchestrator-Tray
         path: |
           Local-Orchestrator-Tray*.dmg
           Local-Orchestrator-Tray-macOS.zip
@@ -107,7 +107,7 @@ jobs:
     - name: Download macOS app
       uses: actions/download-artifact@v3
       with:
-        name: macos-app
+        name: Local-Orchestrator-Tray
         path: macos-build/
 
     - name: Prepare release assets

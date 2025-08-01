@@ -59,9 +59,6 @@ jobs:
 
     - name: Build macOS app
       run: |
-        echo ${GITHUB_WORKSPACE}
-        pwd
-        ls 
         cd ${GITHUB_WORKSPACE}
         python setup.py py2app --no-strip
 
@@ -105,7 +102,7 @@ jobs:
     steps:
     - name: Notify success
       if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
-      uses: ./.github/actions/telegram-notify
+      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
@@ -114,7 +111,7 @@ jobs:
 
     - name: Notify failure
       if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
-      uses: ./.github/actions/telegram-notify
+      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}

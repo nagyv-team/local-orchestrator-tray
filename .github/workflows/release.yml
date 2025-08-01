@@ -98,7 +98,7 @@ jobs:
     environment: Build
     env:
         CHAT_ID: -1002443591493
-    needs: [test, build-macos-app]
+    needs: [create-release]
     if: always()
     
     steps:

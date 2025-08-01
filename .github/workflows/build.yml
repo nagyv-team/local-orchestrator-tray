@@ -108,7 +108,7 @@ jobs:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
         title: "✅ Build succeeded"
-        message: "Build on ${{ github.base_ref }} was successful"
+        message: "Build on ${ GITHUB_BASE_REF } was successful"
 
     - name: Notify failure
       if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
@@ -117,4 +117,4 @@ jobs:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
         title: "❌ Build failed"
-        message: "Build on ${{ github.base_ref }} failed"
+        message: "Build on ${ GITHUB_BASE_REF } failed"

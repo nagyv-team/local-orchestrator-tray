@@ -6,6 +6,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Mac system tray application that listens to Telegram chats and executes local commands based on TOML-formatted messages. It uses Python with the `rumps` library for the tray interface, `py2app` for packaging a Mac compatible application, and `python-telegram-bot` for Telegram integration.
 
+## Development Processes
+
+Always run Python commands in the `.venv` virtual environment.
+
+### Feature work
+
+1. Every feature should be started with a user prompt mentioning a GitHub issue. (e.g. "Implement issue #3.") Do not work on features without a GitHub issue!
+2. Always use dedicated agents for implementing issues:
+  - tdd-implementor
+  - tdd-test-writer 
+3. Always provide short status reports in the GitHub issue as comments
+4. Start every issue on its dedicated branch (e.g. issue #4 -> branch: issue-4)
+
+### Code review
+
+1. Every code review should start on an issue specific branch (e.g. issue-4). Do not do code reviews on the `main` branch!
+2. Focus on the overall quality of the codebase, not just the changes in the branch, but work on the branch
+3. Always use dedicated agents for the code review:
+  1. python-code-reviwer
+4. Always use dedicated agents to fix issues from the review:
+  1. tdd-implementor - for test related files only
+  2. tdd-test-writer - for implementation related files only
+5. Iterate from (2) until the code reviewer agent is satisfied with the result
+
+### Issue refinement flow
+
+1. Use the "product-manager" agent to discuss requirements with the user, and come up with a PM proposal
+1. Use the "ux-designer" agent to review the PM proposal, and optionally suggest usability improvements on the proposal 
+1. Use the "lead-engineer" agent to review the PM proposal, and extend it with a high-level breakdown of ordered deliverables
+1. Use the "product-manager" agent to review the updated PM proposal, incorporate usability improvements and to create an MVC (Minimal Valuable Change) focused delivery plan
+
 ## Development Commands
 
 ### Environment Setup

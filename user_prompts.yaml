@@ -24,3 +24,7 @@
     "session_id": ""
     "user_prompt": |-
       Run pytest directly, without python -m
+  "2025-08-01 09:13":
+    "session_id": ""
+    "user_prompt": |-
+      Clean up references to the build_mac_app.py file from the memory-coder memory tool

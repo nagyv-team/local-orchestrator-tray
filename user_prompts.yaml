@@ -3,3 +3,12 @@
     "session_id": ""
     "user_prompt": |-
       Use git add .
+  "2025-08-01 08:28":
+    "session_id": ""
+    "user_prompt": "Several tests are failing. Please, fix. These might be the old\
+      \ tests that can be removed. \n\nIf you want to remove the tests, ask for my\
+      \ approval, sharing where the new, remaining tests are."
+  "2025-08-01 08:32":
+    "session_id": ""
+    "user_prompt": |-
+      Ok.

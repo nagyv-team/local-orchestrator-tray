@@ -1,0 +1,9 @@
+PyYAML>=6.0
+python-telegram-bot>=20.7
+toml>=0.10.2
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+lizard==1.17.31
+hypothesis>=6.0.0
+memory-profiler>=0.60.0
+psutil>=5.9.0

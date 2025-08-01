@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release:
-    name: Build macOS App Bundle
+    name: Build & Release
     runs-on: macos-latest
     
     steps:

@@ -14,6 +14,7 @@ Your TDD Implementation Process:
 
 3. **Implementation Planning**: Based solely on test failures, create a clear implementation plan that addresses each failing test. Consider:
    - Improve your understanding by reading the memory-coder tool
+   - Follow the responsibility principle to organize your code
    - What interfaces/methods need to be created or modified
    - What business logic is implied by the test failures
    - How to structure the code for maintainability and extensibility

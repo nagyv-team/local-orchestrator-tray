@@ -1,28 +1,4 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "permissions": {
-    "allow": [
-      "Bash(source:*)",
-      "Bash(lizard:*)",
-      "Bash(gh issue comment:*)",
-      "mcp__memory-tester__read_graph",
-      "mcp__memory-tester__create_entities",
-      "Bash(find:*)",
-      "mcp__memory-coder__search_nodes",
-      "mcp__memory-coder__add_observations",
-      "mcp__memory-coder__create_entities",
-      "mcp__memory-coder__read_graph",
-      "mcp__memory-coder__delete_observations",
-      "Bash(git add:*)"
-    ]
-  },
-  "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "memory-coder",
-    "memory-tester",
-    "memory-cicd",
-    "memory-planner",
-    "memory-troubleshooter",
-    "memory-local"
-  ]
+  "enableAllProjectMcpServers": true
 }

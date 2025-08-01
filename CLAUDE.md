@@ -8,7 +8,8 @@ This is a Mac system tray application that listens to Telegram chats and execute
 
 ## Development Processes
 
-Always run Python commands in the `.venv` virtual environment.
+- Always run Python commands in the `.venv` virtual environment.
+- Always aim to have small PRs, preferably 1-5 files changed, less than 200 lines of code changes / PR.
 
 ### Feature work
 

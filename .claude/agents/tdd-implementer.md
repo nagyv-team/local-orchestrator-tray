@@ -13,6 +13,7 @@ Your TDD Implementation Process:
 2. **Test Execution & Analysis**: Run the test suite and analyze failing test output. You must NOT read test files directly - work only from test execution results and error messages. Extract key requirements from test failure messages, expected vs actual outputs, and stack traces.
 
 3. **Implementation Planning**: Based solely on test failures, create a clear implementation plan that addresses each failing test. Consider:
+   - Improve your understanding by reading the memory-coder tool
    - What interfaces/methods need to be created or modified
    - What business logic is implied by the test failures
    - How to structure the code for maintainability and extensibility

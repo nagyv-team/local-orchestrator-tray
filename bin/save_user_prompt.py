@@ -11,7 +11,7 @@ import yaml
 from pathlib import Path
 
 
-def main():
+def get_prompt():
     # Read the event data from stdin
     try:
         event_data = json.load(sys.stdin)
@@ -25,12 +25,8 @@ def main():
         print("No user prompt found in event data", file=sys.stderr)
         sys.exit(1)
 
-    # Generate timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    # Define the YAML file path
-    yaml_file = Path("user_prompts.yaml")
-
+def ensure_file(yaml_file):
     # Load existing data or create new structure
     if yaml_file.exists():
         try:
@@ -46,13 +42,10 @@ def main():
     if 'user_prompts' not in data:
         data['user_prompts'] = {}
 
-    # Add the new prompt with timestamp
-    data['user_prompts'][timestamp] = {
-        "session_id": os.getenv("CLAUDE_SESSION_ID", ""),
-        "user_prompt": user_prompt,
-    }
+    return data
 
-    # Write back to file
+
+def write_data(yaml_file, data):
     try:
         with open(yaml_file, 'w', encoding='utf-8') as f:
             yaml.dump(data, f, default_flow_style=False,
@@ -60,6 +53,27 @@ def main():
     except Exception as e:
         print(f"Error writing to YAML file: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def main():
+    user_prompt = get_prompt()
+
+    # Generate timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # Define the YAML file path
+    yaml_file = Path("user_prompts.yaml")
+
+    data = ensure_file(yaml_file)
+
+    # Add the new prompt with timestamp
+    data['user_prompts'][timestamp] = {
+        "session_id": os.getenv("CLAUDE_SESSION_ID", ""),
+        "user_prompt": user_prompt,
+    }
+
+    # Write back to file
+    write_data(yaml_file, data)
 
 
 if __name__ == "__main__":

@@ -11,8 +11,7 @@
     "memory-coder",
     "memory-tester",
     "memory-cicd",
-    "memory-planner",
-    "memory-troubleshooter"
+    "memory-planner"
   ],
   "hooks": {
     "UserPromptSubmit": [

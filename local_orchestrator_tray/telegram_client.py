@@ -329,7 +329,7 @@ class TelegramClient:
             await self.application.start()
             logger.debug("Application started")
             
-            await self.application.updater.start_polling()
+            await self.application.updater.start_polling(allowed_updates=["channel_post", "message"])
             logger.info("Telegram client connected and polling started")
             
             self.connection_status = "Connected"
@@ -394,7 +394,7 @@ class TelegramClient:
         self.message_count += 1
         self.last_message_time = datetime.now()
         
-        message = update.message
+        message = update.message or update.channel_post
         text = message.text.strip()
         user_info = f"{message.from_user.first_name} ({message.from_user.id})"
         chat_info = f"Chat: {message.chat.id} ({message.chat.type})"

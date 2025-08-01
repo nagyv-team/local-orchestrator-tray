@@ -464,6 +464,144 @@ param = "value"
         assert "Built-in actions" in call_args
         assert "Custom actions" in call_args
 
+    @pytest.mark.asyncio
+    async def test_should_call_start_polling_with_allowed_updates_when_running_client(self, test_config, mock_telegram):
+        """Test that start_polling is called with allowed_updates for channel message support (Issue #14)."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        client = TelegramClient(test_config)
+        
+        # Set up the mock to fail after start_polling so we can verify the call was made correctly
+        async def mock_start_polling(*args, **kwargs):
+            # This will let us verify the call was made with correct parameters
+            raise Exception("Test exception to exit early")
+        
+        mock_telegram['updater'].start_polling.side_effect = mock_start_polling
+        
+        # Execute the _async_run_client method and expect it to fail at start_polling
+        with pytest.raises(Exception, match="Test exception to exit early"):
+            await client._async_run_client()
+        
+        # Verify start_polling was called with the correct allowed_updates parameter
+        mock_telegram['updater'].start_polling.assert_called_once_with(
+            allowed_updates=["channel_post", "message"]
+        )
+
+    @pytest.mark.asyncio 
+    async def test_should_handle_both_messages_and_channel_posts_when_receiving_updates(self, test_config, mock_telegram):
+        """Test that both regular messages and channel posts are processed by the same handler (Issue #14)."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        with patch('subprocess.run') as mock_run:
+            # Mock successful command execution
+            mock_run.return_value = Mock(
+                stdout="hello world",
+                stderr="",
+                returncode=0
+            )
+
+            client = TelegramClient(test_config)
+
+            # Test data - same TOML content for both message types
+            toml_content = """
+[hello]
+name = "test"
+"""
+
+            # Test regular message handling
+            mock_message = Mock()
+            mock_message.text = toml_content
+            mock_message.reply_text = AsyncMock()
+
+            mock_update_message = Mock()
+            mock_update_message.message = mock_message
+            mock_update_message.channel_post = None
+
+            mock_context = Mock()
+
+            await client.handle_message(mock_update_message, mock_context)
+            message_reply_call = mock_message.reply_text.call_args
+
+            # Test channel post handling  
+            mock_channel_post = Mock()
+            mock_channel_post.text = toml_content
+            mock_channel_post.reply_text = AsyncMock()
+
+            mock_update_channel = Mock()
+            mock_update_channel.message = None
+            mock_update_channel.channel_post = mock_channel_post
+
+            mock_context_channel = Mock()
+
+            await client.handle_message(mock_update_channel, mock_context_channel)
+            channel_reply_call = mock_channel_post.reply_text.call_args
+
+            # Verify both message types got identical responses
+            assert message_reply_call is not None
+            assert channel_reply_call is not None
+            
+            message_response = message_reply_call[0][0] 
+            channel_response = channel_reply_call[0][0]
+            
+            # Both should contain success indicators
+            assert "hello" in message_response
+            assert "completed" in message_response
+            assert "hello" in channel_response
+            assert "completed" in channel_response
+
+    @pytest.mark.asyncio
+    async def test_should_extract_message_from_correct_update_attribute_when_handling_different_types(self, test_config, mock_telegram):
+        """Test that handle_message correctly extracts text from update.message or update.channel_post (Issue #14)."""
+        # Import directly from the module to avoid main.py import
+        sys.path.insert(0, str(Path(__file__).parent.parent / 'local_orchestrator_tray'))
+        from telegram_client import TelegramClient
+
+        client = TelegramClient(test_config)
+
+        # Test that regular message is extracted from update.message
+        mock_message = Mock()
+        mock_message.text = "[hello]\nname = 'regular'"
+        mock_message.reply_text = AsyncMock()
+
+        mock_update_message = Mock()
+        mock_update_message.message = mock_message
+        mock_update_message.channel_post = None
+
+        mock_context = Mock()
+
+        # Test regular message - should use update.message.text
+        with patch.object(client, 'parse_toml_message') as mock_parse:
+            mock_parse.return_value = None  # Simplify test by avoiding action execution
+            
+            await client.handle_message(mock_update_message, mock_context)
+            
+            # Verify parse was called with text from update.message
+            mock_parse.assert_called_once_with("[hello]\nname = 'regular'")
+
+        # Test that channel post is extracted from update.channel_post
+        mock_channel_post = Mock()
+        mock_channel_post.text = "[hello]\nname = 'channel'"
+        mock_channel_post.reply_text = AsyncMock()
+
+        mock_update_channel = Mock()
+        mock_update_channel.message = None
+        mock_update_channel.channel_post = mock_channel_post
+
+        mock_context_channel = Mock()
+
+        # Test channel post - should use update.channel_post.text
+        with patch.object(client, 'parse_toml_message') as mock_parse_channel:
+            mock_parse_channel.return_value = None  # Simplify test by avoiding action execution
+            
+            await client.handle_message(mock_update_channel, mock_context_channel)
+            
+            # Verify parse was called with text from update.channel_post
+            mock_parse_channel.assert_called_once_with("[hello]\nname = 'channel'")
+
 
 class TestIntegration:
     """Integration tests."""

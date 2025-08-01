@@ -28,3 +28,15 @@
     "session_id": ""
     "user_prompt": |-
       Clean up references to the build_mac_app.py file from the memory-coder memory tool
+  "2025-08-01 09:14":
+    "session_id": ""
+    "user_prompt": |-
+      Use the tdd-test-writer and the tdd-implementer agents to fix comment "HIGH: build_mac_app.py main() Function Complexity (CCN 10)" in issue #16. Follow the instructions provided in the issue description under "Milestone 2".
+  "2025-08-01 09:19":
+    "session_id": ""
+    "user_prompt": |-
+      Use the tdd-test-writer and the tdd-implementer agents to fix comment "HIGH: process_toml_actions() Function Complexity (CCN 9)" in issue #16. Follow the instructions provided in the issue description under "Milestone 2".
+  "2025-08-01 09:40":
+    "session_id": ""
+    "user_prompt": |-
+      Use git add -A

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(setup.sh)",
+      "Bash(gh issue view:*)",
+      "Bash(git checkout:*)",
+      "Bash(pytest:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "memory-coder",
+    "memory-tester",
+    "memory-cicd",
+    "memory-planner"
+  ],
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/bin/save_user_prompt.py"
+          }
+        ]
+      }
+    ]
+  }
+}

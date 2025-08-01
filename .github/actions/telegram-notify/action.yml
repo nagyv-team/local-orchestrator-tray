@@ -19,10 +19,15 @@ runs:
   steps:
     - name: Send Telegram notification
       shell: bash
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ inputs.telegram_bot_token }}
+        CHAT_ID: ${{ inputs.chat_id }}
+        TITLE: ${{ inputs.title }}
+        MESSAGE: ${{ inputs.message }}
       run: |
-        curl -X POST "https://api.telegram.org/bot${{ inputs.telegram_bot_token }}/sendMessage" \
+        curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
           -H "Content-Type: application/json" \
-          -d '{
-            "chat_id": "${{ inputs.chat_id }}",
-            "text": "[Notification]\nmessage = \"${{ inputs.message }}\"\ntitle = \"${{ inputs.title }}\"\n"
-          }'
+          -d "{
+            \"chat_id\": \"${CHAT_ID}\",
+            \"text\": \"[Notification]\\nmessage = \\\"${MESSAGE}\\\"\\ntitle = \\\"${TITLE}\\\"\\n\"
+          }"

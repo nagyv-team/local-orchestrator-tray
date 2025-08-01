@@ -109,8 +109,8 @@ jobs:
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
-        title: "✅ Release succeeded"
-        message: "Release of ${{ github.ref_name }} was successful"
+        title: ✅ Release succeeded
+        message: Release of ${{ github.ref_name }} was successful
 
     - name: Notify failure
       if: needs.create-release.result == 'failure'
@@ -118,5 +118,5 @@ jobs:
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
-        title: "❌ Release failed"
-        message: "Release of ${ GITHUB_REF_NAME } failed"
+        title: ❌ Release failed
+        message: Release of ${ GITHUB_REF_NAME } failed

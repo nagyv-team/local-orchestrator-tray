@@ -1,0 +1,64 @@
+{
+    "mcpServers": {
+        "memory-cicd": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-cicd.jsonl"
+            }
+        },
+        "memory-coder": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-coder.jsonl"
+            }
+        },
+        "memory-local": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-local.jsonl"
+            }
+        },
+        "memory-planner": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-planner.jsonl"
+            }
+        },
+        "memory-tester": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-tester.jsonl"
+            }
+        },
+        "memory-troubleshooter": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "/workspaces/local-orchestrator-tray/memory/memory-troubleshooter.jsonl"
+            }
+        }
+    }
+}

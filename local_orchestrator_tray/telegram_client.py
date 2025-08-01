@@ -37,36 +37,37 @@ def setup_logging():
     log_dir = Path.home() / ".config" / "local-orchestrator-tray"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "telegram_debug.log"
-    
+
     # Create formatter for detailed logging
     formatter = logging.Formatter(
         '%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-    
+
     # Set up rotating file handler (10MB max, keep 5 files)
     file_handler = logging.handlers.RotatingFileHandler(
         log_file, maxBytes=10*1024*1024, backupCount=5
     )
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
-    
+
     # Set up console handler for development
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.INFO)
-    
+
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
-    
+
     # Configure telegram library logging
     telegram_logger = logging.getLogger('telegram')
     telegram_logger.setLevel(logging.WARNING)  # Reduce telegram lib noise
-    
+
     return log_file
+
 
 # Initialize logging and get log file path
 LOG_FILE_PATH = setup_logging()
@@ -85,7 +86,8 @@ class BuiltInActionRegistry:
                 'optional_params': ['title']
             }
         }
-        logger.info(f"BuiltInActionRegistry initialized with {len(self.actions)} built-in actions")
+        logger.info(
+            f"BuiltInActionRegistry initialized with {len(self.actions)} built-in actions")
 
     def get_action(self, name: str) -> Optional[Dict[str, Any]]:
         """Get built-in action configuration by name."""
@@ -103,12 +105,14 @@ class BuiltInActionRegistry:
         """Handle Notification built-in action."""
         message = params.get('message')
         title = params.get('title', 'Local Orchestrator')
-        
+
         if not message:
-            raise ValueError("Notification action requires 'message' parameter")
-        
-        logger.info(f"Showing notification: title='{title}', message='{message}'")
-        
+            raise ValueError(
+                "Notification action requires 'message' parameter")
+
+        logger.info(
+            f"Showing notification: title='{title}', message='{message}'")
+
         if rumps:
             rumps.notification(
                 title=title,
@@ -192,42 +196,41 @@ class TelegramClient:
         self.message_count = 0
         self.error_count = 0
         self.last_message_time = None
-        
+
         logger.info(f"TelegramClient initializing with config: {config_path}")
-        
+
         if self.config_manager.load_and_validate():
             self.setup_actions()
-            logger.info(f"Client initialized successfully with {len(self.action_registry.actions)} actions")
+            logger.info(
+                f"Client initialized successfully with {len(self.action_registry.actions)} actions")
         else:
-            logger.error(f"Client initialization failed: {self.config_manager.error}")
-    
+            logger.error(
+                f"Client initialization failed: {self.config_manager.error}")
+
     @property
     def config_valid(self) -> bool:
         """Backward compatibility property for config validation status."""
         return self.config_manager.is_valid
-    
+
     @property
     def config_error(self) -> Optional[str]:
         """Backward compatibility property for config error message."""
         return self.config_manager.error
-    
+
     @property
     def config(self) -> Dict[str, Any]:
         """Backward compatibility property for config data."""
         return self.config_manager.config
 
-
-
-
-
     def setup_actions(self):
         """Setup actions from configuration."""
         actions_config = self.config_manager.get_actions_config()
         logger.debug(f"Setting up {len(actions_config)} actions")
-        
+
         for name, action_config in actions_config.items():
             if isinstance(action_config, dict):
-                logger.debug(f"Registering action '{name}' with command: {action_config.get('command', 'N/A')}")
+                logger.debug(
+                    f"Registering action '{name}' with command: {action_config.get('command', 'N/A')}")
                 self.action_registry.register_action(
                     name=name,
                     command=action_config.get('command', ''),
@@ -236,9 +239,11 @@ class TelegramClient:
                 )
                 logger.info(f"Action '{name}' registered successfully")
             else:
-                logger.warning(f"Skipping invalid action config for '{name}': {action_config}")
-        
-        logger.info(f"Action setup completed. Total actions: {len(self.action_registry.actions)}")
+                logger.warning(
+                    f"Skipping invalid action config for '{name}': {action_config}")
+
+        logger.info(
+            f"Action setup completed. Total actions: {len(self.action_registry.actions)}")
 
     def get_connection_status(self) -> str:
         """Get current connection status for tray menu."""
@@ -249,7 +254,7 @@ class TelegramClient:
     def start_client(self) -> bool:
         """Start the Telegram client in a separate thread."""
         logger.info("Starting Telegram client...")
-        
+
         if self.running:
             logger.warning("Client already running")
             return True
@@ -257,7 +262,8 @@ class TelegramClient:
         # Don't start client if config is invalid
         if not self.config_manager.is_valid:
             self.connection_status = f"Config Error: {self.config_manager.error}"
-            logger.error(f"Cannot start client - invalid config: {self.config_manager.error}")
+            logger.error(
+                f"Cannot start client - invalid config: {self.config_manager.error}")
             return False
 
         token = self.config_manager.get_bot_token()
@@ -325,13 +331,13 @@ class TelegramClient:
 
             await self.application.initialize()
             logger.debug("Application initialized")
-            
+
             await self.application.start()
             logger.debug("Application started")
-            
+
             await self.application.updater.start_polling(allowed_updates=["channel_post", "message"])
             logger.info("Telegram client connected and polling started")
-            
+
             self.connection_status = "Connected"
 
             # Keep running until stopped
@@ -355,7 +361,8 @@ class TelegramClient:
                     logger.debug("Application shutdown complete")
                 except Exception as e:
                     logger.error(f"Error during cleanup: {e}")
-                    logger.error(f"Exception details: {traceback.format_exc()}")
+                    logger.error(
+                        f"Exception details: {traceback.format_exc()}")
 
     def stop_client(self):
         """Stop the Telegram client gracefully."""
@@ -393,38 +400,44 @@ class TelegramClient:
         """Handle incoming Telegram messages."""
         self.message_count += 1
         self.last_message_time = datetime.now()
-        
+
         message = update.message or update.channel_post
         text = message.text.strip()
-        user_info = f"{message.from_user.first_name} ({message.from_user.id})"
-        chat_info = f"Chat: {message.chat.id} ({message.chat.type})"
-        
-        logger.info(f"[MSG #{self.message_count}] Received from {user_info} in {chat_info}")
-        logger.info(f"[MSG #{self.message_count}] Message length: {len(text)} characters")
-        logger.debug(f"[MSG #{self.message_count}] Full message: {text[:500]}{'...' if len(text) > 500 else ''}")
+
+        logger.info(
+            f"[MSG #{self.message_count}] Message length: {len(text)} characters")
+        logger.debug(
+            f"[MSG #{self.message_count}] Full message: {text[:500]}{'...' if len(text) > 500 else ''}")
 
         try:
             # Parse TOML content
-            logger.debug(f"[MSG #{self.message_count}] Attempting TOML parsing...")
+            logger.debug(
+                f"[MSG #{self.message_count}] Attempting TOML parsing...")
             toml_data = self.parse_toml_message(text)
             if not toml_data:
-                logger.debug(f"[MSG #{self.message_count}] Not a TOML message, ignoring")
+                logger.debug(
+                    f"[MSG #{self.message_count}] Not a TOML message, ignoring")
                 return  # Not a TOML message, ignore
 
-            logger.info(f"[MSG #{self.message_count}] TOML parsed successfully: {list(toml_data.keys())}")
-            
+            logger.info(
+                f"[MSG #{self.message_count}] TOML parsed successfully: {list(toml_data.keys())}")
+
             # Process actions from TOML
             await self.process_toml_actions(message, toml_data)
-            logger.info(f"[MSG #{self.message_count}] Message processing completed")
+            logger.info(
+                f"[MSG #{self.message_count}] Message processing completed")
 
         except Exception as e:
             self.error_count += 1
-            logger.error(f"[MSG #{self.message_count}] Message handling error: {e}")
-            logger.error(f"[MSG #{self.message_count}] Exception details: {traceback.format_exc()}")
+            logger.error(
+                f"[MSG #{self.message_count}] Message handling error: {e}")
+            logger.error(
+                f"[MSG #{self.message_count}] Exception details: {traceback.format_exc()}")
             try:
                 await message.reply_text(f"Error processing message: {e}")
             except Exception as reply_error:
-                logger.error(f"[MSG #{self.message_count}] Failed to send error reply: {reply_error}")
+                logger.error(
+                    f"[MSG #{self.message_count}] Failed to send error reply: {reply_error}")
 
     def parse_toml_message(self, text: str) -> Optional[Dict[str, Any]]:
         """Parse TOML content from message."""
@@ -438,8 +451,9 @@ class TelegramClient:
                 # toml library fallback
                 logger.debug("Using toml library fallback")
                 result = tomllib.loads(text)
-            
-            logger.debug(f"TOML parsing successful, found {len(result)} top-level keys: {list(result.keys())}")
+
+            logger.debug(
+                f"TOML parsing successful, found {len(result)} top-level keys: {list(result.keys())}")
             return result
         except Exception as e:
             logger.debug(f"Failed to parse as TOML: {e}")
@@ -447,14 +461,17 @@ class TelegramClient:
 
     async def process_toml_actions(self, message, toml_data: Dict[str, Any]):
         """Process actions from parsed TOML data."""
-        logger.debug(f"Processing {len(toml_data)} TOML sections: {list(toml_data.keys())}")
-        
+        logger.debug(
+            f"Processing {len(toml_data)} TOML sections: {list(toml_data.keys())}")
+
         # Find action tables (top-level sections)
         for section_name, section_data in toml_data.items():
-            logger.debug(f"Processing section '{section_name}': {type(section_data)}")
-            
+            logger.debug(
+                f"Processing section '{section_name}': {type(section_data)}")
+
             if not isinstance(section_data, dict):
-                logger.debug(f"Skipping section '{section_name}' - not a dictionary")
+                logger.debug(
+                    f"Skipping section '{section_name}' - not a dictionary")
                 continue
 
             await self._route_and_execute_action(message, section_name, section_data)
@@ -465,7 +482,7 @@ class TelegramClient:
         if self.built_in_action_registry.is_built_in_action(section_name):
             await self._execute_built_in_action_with_handling(message, section_name, section_data)
             return
-        
+
         # Check custom actions
         action_config = self.action_registry.get_action(section_name)
         if not action_config:
@@ -476,27 +493,33 @@ class TelegramClient:
 
     async def _execute_built_in_action_with_handling(self, message, section_name: str, section_data: Dict[str, Any]):
         """Execute built-in action with error handling."""
-        logger.info(f"Executing built-in action '{section_name}' with parameters: {section_data}")
+        logger.info(
+            f"Executing built-in action '{section_name}' with parameters: {section_data}")
         try:
             result = await self.execute_built_in_action(section_name, section_data)
-            logger.info(f"Built-in action '{section_name}' completed successfully, result: {result}")
+            logger.info(
+                f"Built-in action '{section_name}' completed successfully, result: {result}")
             await message.reply_text(f"✅ Built-in action '{section_name}' completed: {result}")
         except Exception as e:
             logger.error(f"Built-in action '{section_name}' failed: {e}")
-            logger.error(f"Built-in action failure details: {traceback.format_exc()}")
+            logger.error(
+                f"Built-in action failure details: {traceback.format_exc()}")
             await message.reply_text(f"❌ Built-in action '{section_name}' failed: {e}")
 
     async def _execute_custom_action_with_handling(self, message, section_name: str, section_data: Dict[str, Any], action_config: Dict[str, Any]):
         """Execute custom action with error handling and result formatting."""
-        logger.info(f"Executing custom action '{section_name}' with parameters: {section_data}")
-        
+        logger.info(
+            f"Executing custom action '{section_name}' with parameters: {section_data}")
+
         try:
             result = await self.execute_action(action_config, section_data)
-            logger.info(f"Custom action '{section_name}' completed successfully, result length: {len(result)} chars")
+            logger.info(
+                f"Custom action '{section_name}' completed successfully, result length: {len(result)} chars")
             await self._format_and_send_custom_result(message, section_name, result)
         except Exception as e:
             logger.error(f"Custom action '{section_name}' failed: {e}")
-            logger.error(f"Custom action failure details: {traceback.format_exc()}")
+            logger.error(
+                f"Custom action failure details: {traceback.format_exc()}")
             await message.reply_text(f"❌ Custom action '{section_name}' failed: {e}")
 
     async def _handle_action_not_found(self, message, section_name: str):
@@ -516,8 +539,10 @@ class TelegramClient:
             # Truncate long results for Telegram
             max_length = 4000  # Telegram message limit minus formatting
             if len(result) > max_length:
-                truncated_result = result[:max_length] + "\n\n[Output truncated - see logs for full result]"
-                logger.debug(f"Truncated result from {len(result)} to {len(truncated_result)} characters")
+                truncated_result = result[:max_length] + \
+                    "\n\n[Output truncated - see logs for full result]"
+                logger.debug(
+                    f"Truncated result from {len(result)} to {len(truncated_result)} characters")
                 await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{truncated_result}\n```")
             else:
                 await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{result}\n```")
@@ -528,7 +553,7 @@ class TelegramClient:
         """Execute an action with given parameters."""
         command = action_config['command']
         working_dir = action_config.get('working_dir')
-        
+
         logger.debug(f"Executing action - command: {command}")
         logger.debug(f"Working directory: {working_dir or 'current'}")
         logger.debug(f"Parameters: {params}")
@@ -544,7 +569,7 @@ class TelegramClient:
         # Build full command
         full_command = command.split() + args
         logger.info(f"Executing command: {' '.join(full_command)}")
-        
+
         # Execute command
         start_time = datetime.now()
         try:
@@ -555,15 +580,17 @@ class TelegramClient:
                 text=True,
                 timeout=30  # 30 second timeout
             )
-            
+
             execution_time = (datetime.now() - start_time).total_seconds()
-            logger.info(f"Command completed in {execution_time:.2f}s with exit code {result.returncode}")
-            
+            logger.info(
+                f"Command completed in {execution_time:.2f}s with exit code {result.returncode}")
+
             output = result.stdout
             if result.stderr:
-                logger.warning(f"Command had stderr output: {result.stderr[:200]}{'...' if len(result.stderr) > 200 else ''}")
+                logger.warning(
+                    f"Command had stderr output: {result.stderr[:200]}{'...' if len(result.stderr) > 200 else ''}")
                 output += f"\nErrors:\n{result.stderr}"
-            
+
             logger.debug(f"Command output length: {len(output)} characters")
             return output
 
@@ -573,52 +600,56 @@ class TelegramClient:
             raise Exception("Command timed out after 30 seconds")
         except subprocess.CalledProcessError as e:
             execution_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Command failed after {execution_time:.2f}s with exit code {e.returncode}")
+            logger.error(
+                f"Command failed after {execution_time:.2f}s with exit code {e.returncode}")
             logger.error(f"Command stderr: {e.stderr}")
             raise Exception(
                 f"Command failed with exit code {e.returncode}: {e.stderr}")
         except Exception as e:
             execution_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Command execution failed after {execution_time:.2f}s: {e}")
+            logger.error(
+                f"Command execution failed after {execution_time:.2f}s: {e}")
             logger.error(f"Exception details: {traceback.format_exc()}")
             raise Exception(f"Failed to execute command: {e}")
-    
+
     async def execute_built_in_action(self, action_name: str, params: Dict[str, Any]) -> str:
         """Execute a built-in action with given parameters."""
         action_config = self.built_in_action_registry.get_action(action_name)
         if not action_config:
             raise Exception(f"Built-in action '{action_name}' not found")
-        
+
         handler = action_config.get('handler')
         if not handler:
             raise Exception(f"Built-in action '{action_name}' has no handler")
-        
-        logger.debug(f"Executing built-in action '{action_name}' with params: {params}")
-        
+
+        logger.debug(
+            f"Executing built-in action '{action_name}' with params: {params}")
+
         # Validate required parameters
         required_params = action_config.get('required_params', [])
         for param in required_params:
             if param not in params:
-                raise ValueError(f"Built-in action '{action_name}' requires parameter '{param}'")
-        
+                raise ValueError(
+                    f"Built-in action '{action_name}' requires parameter '{param}'")
+
         # Execute the handler
         return await handler(params)
-    
+
     def get_log_file_path(self) -> Path:
         """Get the path to the log file."""
         return LOG_FILE_PATH
-    
+
     def _camel_to_kebab(self, name: str) -> str:
         """Convert camelCase/snake_case to kebab-case for CLI arguments.
-        
+
         Fixes issue #8: myKey should become --my-key, not --mykey
-        
+
         Args:
             name: Parameter name in camelCase, snake_case, or kebab-case
-            
+
         Returns:
             Kebab-case string suitable for CLI arguments
-            
+
         Examples:
             - myKey -> my-key
             - dayOfYear -> day-of-year

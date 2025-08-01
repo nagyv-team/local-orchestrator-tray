@@ -457,55 +457,72 @@ class TelegramClient:
                 logger.debug(f"Skipping section '{section_name}' - not a dictionary")
                 continue
 
-            # Check built-in actions first (uppercase names)
-            if self.built_in_action_registry.is_built_in_action(section_name):
-                logger.info(f"Executing built-in action '{section_name}' with parameters: {section_data}")
-                try:
-                    result = await self.execute_built_in_action(section_name, section_data)
-                    logger.info(f"Built-in action '{section_name}' completed successfully, result: {result}")
-                    await message.reply_text(f"✅ Built-in action '{section_name}' completed: {result}")
-                except Exception as e:
-                    logger.error(f"Built-in action '{section_name}' failed: {e}")
-                    logger.error(f"Built-in action failure details: {traceback.format_exc()}")
-                    await message.reply_text(f"❌ Built-in action '{section_name}' failed: {e}")
-                continue
-            
-            # Check custom actions
-            action_config = self.action_registry.get_action(section_name)
-            if not action_config:
-                logger.warning(f"Action '{section_name}' not found in any registry")
-                # Get combined actions description
-                built_in_desc = self.built_in_action_registry.get_actions_description()
-                custom_desc = self.action_registry.get_actions_description()
-                combined_desc = f"{built_in_desc}\n\n{custom_desc}"
-                await message.reply_text(
-                    f"Action '{section_name}' not found.\n\n{combined_desc}"
-                )
-                continue
+            await self._route_and_execute_action(message, section_name, section_data)
 
-            logger.info(f"Executing custom action '{section_name}' with parameters: {section_data}")
-            
-            # Execute the custom action
-            try:
-                result = await self.execute_action(action_config, section_data)
-                logger.info(f"Custom action '{section_name}' completed successfully, result length: {len(result)} chars")
-                
-                if result.strip():
-                    # Truncate long results for Telegram
-                    max_length = 4000  # Telegram message limit minus formatting
-                    if len(result) > max_length:
-                        truncated_result = result[:max_length] + "\n\n[Output truncated - see logs for full result]"
-                        logger.debug(f"Truncated result from {len(result)} to {len(truncated_result)} characters")
-                        await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{truncated_result}\n```")
-                    else:
-                        await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{result}\n```")
-                else:
-                    await message.reply_text(f"✅ Custom action '{section_name}' completed successfully")
-                    
-            except Exception as e:
-                logger.error(f"Custom action '{section_name}' failed: {e}")
-                logger.error(f"Custom action failure details: {traceback.format_exc()}")
-                await message.reply_text(f"❌ Custom action '{section_name}' failed: {e}")
+    async def _route_and_execute_action(self, message, section_name: str, section_data: Dict[str, Any]):
+        """Route and execute a single action based on its type."""
+        # Check built-in actions first (uppercase names)
+        if self.built_in_action_registry.is_built_in_action(section_name):
+            await self._execute_built_in_action_with_handling(message, section_name, section_data)
+            return
+        
+        # Check custom actions
+        action_config = self.action_registry.get_action(section_name)
+        if not action_config:
+            await self._handle_action_not_found(message, section_name)
+            return
+
+        await self._execute_custom_action_with_handling(message, section_name, section_data, action_config)
+
+    async def _execute_built_in_action_with_handling(self, message, section_name: str, section_data: Dict[str, Any]):
+        """Execute built-in action with error handling."""
+        logger.info(f"Executing built-in action '{section_name}' with parameters: {section_data}")
+        try:
+            result = await self.execute_built_in_action(section_name, section_data)
+            logger.info(f"Built-in action '{section_name}' completed successfully, result: {result}")
+            await message.reply_text(f"✅ Built-in action '{section_name}' completed: {result}")
+        except Exception as e:
+            logger.error(f"Built-in action '{section_name}' failed: {e}")
+            logger.error(f"Built-in action failure details: {traceback.format_exc()}")
+            await message.reply_text(f"❌ Built-in action '{section_name}' failed: {e}")
+
+    async def _execute_custom_action_with_handling(self, message, section_name: str, section_data: Dict[str, Any], action_config: Dict[str, Any]):
+        """Execute custom action with error handling and result formatting."""
+        logger.info(f"Executing custom action '{section_name}' with parameters: {section_data}")
+        
+        try:
+            result = await self.execute_action(action_config, section_data)
+            logger.info(f"Custom action '{section_name}' completed successfully, result length: {len(result)} chars")
+            await self._format_and_send_custom_result(message, section_name, result)
+        except Exception as e:
+            logger.error(f"Custom action '{section_name}' failed: {e}")
+            logger.error(f"Custom action failure details: {traceback.format_exc()}")
+            await message.reply_text(f"❌ Custom action '{section_name}' failed: {e}")
+
+    async def _handle_action_not_found(self, message, section_name: str):
+        """Handle case when action is not found in any registry."""
+        logger.warning(f"Action '{section_name}' not found in any registry")
+        # Get combined actions description
+        built_in_desc = self.built_in_action_registry.get_actions_description()
+        custom_desc = self.action_registry.get_actions_description()
+        combined_desc = f"{built_in_desc}\n\n{custom_desc}"
+        await message.reply_text(
+            f"Action '{section_name}' not found.\n\n{combined_desc}"
+        )
+
+    async def _format_and_send_custom_result(self, message, section_name: str, result: str):
+        """Format and send custom action result, handling truncation if needed."""
+        if result.strip():
+            # Truncate long results for Telegram
+            max_length = 4000  # Telegram message limit minus formatting
+            if len(result) > max_length:
+                truncated_result = result[:max_length] + "\n\n[Output truncated - see logs for full result]"
+                logger.debug(f"Truncated result from {len(result)} to {len(truncated_result)} characters")
+                await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{truncated_result}\n```")
+            else:
+                await message.reply_text(f"✅ Custom action '{section_name}' completed:\n```\n{result}\n```")
+        else:
+            await message.reply_text(f"✅ Custom action '{section_name}' completed successfully")
 
     async def execute_action(self, action_config: Dict[str, Any], params: Dict[str, Any]) -> str:
         """Execute an action with given parameters."""

@@ -110,7 +110,7 @@ jobs:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
         title: ✅ Release succeeded
-        message: Release of ${{ github.ref_name }} was successful
+        message: Release of $GITHUB_REF_NAME was successful
 
     - name: Notify failure
       if: needs.create-release.result == 'failure'
@@ -119,4 +119,4 @@ jobs:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
         title: ❌ Release failed
-        message: Release of ${ GITHUB_REF_NAME } failed
+        message: Release of $GITHUB_REF_NAME failed

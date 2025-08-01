@@ -102,9 +102,10 @@ jobs:
     if: always()
     
     steps:
+    - uses: actions/checkout@v4
     - name: Notify success
       if: needs.create-release.result == 'success'
-      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
+      uses: ./.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
@@ -113,7 +114,7 @@ jobs:
 
     - name: Notify failure
       if: needs.create-release.result == 'failure'
-      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
+      uses: ./.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}

@@ -100,9 +100,10 @@ jobs:
     if: always()
     
     steps:
+    - uses: actions/checkout@v4
     - name: Notify success
       if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
-      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
+      uses: ./.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}
@@ -111,7 +112,7 @@ jobs:
 
     - name: Notify failure
       if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
-      uses: ${GITHUB_WORKSPACE}/.github/actions/telegram-notify
+      uses: ./.github/actions/telegram-notify
       with:
         telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ env.CHAT_ID }}

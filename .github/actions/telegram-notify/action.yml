@@ -1,0 +1,28 @@
+name: 'Telegram Notification'
+description: 'Send a notification to Telegram chat in TOML format'
+inputs:
+  telegram_bot_token:
+    description: 'Telegram bot token'
+    required: true
+  chat_id:
+    description: 'Telegram chat ID'
+    required: true
+  title:
+    description: 'Notification title'
+    required: true
+  message:
+    description: 'Notification message'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Send Telegram notification
+      shell: bash
+      run: |
+        curl -X POST "https://api.telegram.org/bot${{ inputs.telegram_bot_token }}/sendMessage" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "chat_id": "${{ inputs.chat_id }}",
+            "text": "[Notification]\nmessage = \"${{ inputs.message }}\"\ntitle = \"${{ inputs.title }}\"\n"
+          }'

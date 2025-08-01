@@ -105,10 +105,18 @@ jobs:
     steps:
     - name: Notify success
       if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
-      run: |
-        curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" -d chat_id=$CHAT_ID -d text="[Notification]\nmessage = \"Build on ${GITHUB_BASE_REF} was successful\"\ntitle = \"✅ Build succeeded\""
+      uses: ./.github/actions/telegram-notify
+      with:
+        telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        chat_id: ${{ env.CHAT_ID }}
+        title: "✅ Build succeeded"
+        message: "Build on ${{ github.base_ref }} was successful"
 
     - name: Notify failure
       if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
-      run: |
-        curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" -d chat_id=$CHAT_ID -d text="[Notification]\nmessage = \"Build on ${GITHUB_BASE_REF} failed\"\ntitle = \"❌ Build failed\""
+      uses: ./.github/actions/telegram-notify
+      with:
+        telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        chat_id: ${{ env.CHAT_ID }}
+        title: "❌ Build failed"
+        message: "Build on ${{ github.base_ref }} failed"

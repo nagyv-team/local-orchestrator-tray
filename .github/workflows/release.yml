@@ -103,11 +103,19 @@ jobs:
     
     steps:
     - name: Notify success
-      if: needs.test.result == 'success' && needs.build-macos-app.result == 'success'
-      run: |
-        curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id=$CHAT_ID -d text="[Notification]\nmessage = \"Release of ${GITHUB_BASE_REF} was successful\"\ntitle = \"✅ Release succeeded\""
+      if: needs.create-release.result == 'success'
+      uses: ./.github/actions/telegram-notify
+      with:
+        telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        chat_id: ${{ env.CHAT_ID }}
+        title: "✅ Release succeeded"
+        message: "Release of ${{ github.ref_name }} was successful"
 
     - name: Notify failure
-      if: needs.test.result == 'failure' || needs.build-macos-app.result == 'failure'
-      run: |
-        curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id=$CHAT_ID -d text="[Notification]\nmessage = \"Release of ${GITHUB_BASE_REF} failed\"\ntitle = \"❌ Release failed\""
+      if: needs.create-release.result == 'failure'
+      uses: ./.github/actions/telegram-notify
+      with:
+        telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        chat_id: ${{ env.CHAT_ID }}
+        title: "❌ Release failed"
+        message: "Release of ${{ github.ref_name }} failed"

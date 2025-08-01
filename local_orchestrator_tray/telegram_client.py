@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import yaml
 
+from local_orchestrator_tray.configuration_manager import ConfigurationManager
+
 try:
     import tomllib
 except ImportError:
@@ -179,8 +181,7 @@ class TelegramClient:
     """Telegram client for handling bot interactions."""
 
     def __init__(self, config_path: Path):
-        self.config_path = config_path
-        self.config = {}
+        self.config_manager = ConfigurationManager(config_path)
         self.built_in_action_registry = BuiltInActionRegistry()
         self.action_registry = ActionRegistry()
         self.connection_status = "disconnected"
@@ -188,167 +189,40 @@ class TelegramClient:
         self.running = False
         self._loop = None
         self._thread = None
-        self.config_valid = False
-        self.config_error = None
         self.message_count = 0
         self.error_count = 0
         self.last_message_time = None
         
         logger.info(f"TelegramClient initializing with config: {config_path}")
         
-        self.load_config()
-        self.validate_config()
-        if self.config_valid:
+        if self.config_manager.load_and_validate():
             self.setup_actions()
             logger.info(f"Client initialized successfully with {len(self.action_registry.actions)} actions")
         else:
-            logger.error(f"Client initialization failed: {self.config_error}")
+            logger.error(f"Client initialization failed: {self.config_manager.error}")
+    
+    @property
+    def config_valid(self) -> bool:
+        """Backward compatibility property for config validation status."""
+        return self.config_manager.is_valid
+    
+    @property
+    def config_error(self) -> Optional[str]:
+        """Backward compatibility property for config error message."""
+        return self.config_manager.error
+    
+    @property
+    def config(self) -> Dict[str, Any]:
+        """Backward compatibility property for config data."""
+        return self.config_manager.config
 
-    def load_config(self):
-        """Load configuration from YAML file."""
-        logger.debug(f"Loading config from: {self.config_path}")
-        try:
-            if self.config_path.exists():
-                logger.debug(f"Config file exists, size: {self.config_path.stat().st_size} bytes")
-                with open(self.config_path, 'r') as f:
-                    self.config = yaml.safe_load(f) or {}
-                logger.info(f"Config loaded successfully with {len(self.config)} top-level sections")
-            else:
-                logger.warning(f"Config file does not exist: {self.config_path}")
-                self.config = {}
 
-            # Ensure required sections exist
-            if 'telegram' not in self.config:
-                self.config['telegram'] = {}
-                logger.debug("Created empty telegram section")
-            if 'actions' not in self.config:
-                self.config['actions'] = {}
-                logger.debug("Created empty actions section")
-            
-            logger.debug(f"Final config structure: {list(self.config.keys())}")
 
-        except Exception as e:
-            logger.error(f"Failed to load config: {e}")
-            logger.error(f"Exception details: {traceback.format_exc()}")
-            self.config = {'telegram': {}, 'actions': {}}
 
-    def _validate_config_structure(self):
-        """Validate that the config is a dictionary.
-        
-        Returns:
-            bool: True if validation passes, False if it fails (with error set)
-        """
-        if not isinstance(self.config, dict):
-            self.config_error = "Config file must contain a YAML dictionary"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-        return True
-
-    def _validate_telegram_section(self):
-        """Validate the telegram section and bot token.
-        
-        Returns:
-            bool: True if validation passes, False if it fails (with error set)
-        """
-        telegram_config = self.config.get('telegram', {})
-        logger.debug(f"Telegram config section: {list(telegram_config.keys()) if isinstance(telegram_config, dict) else 'invalid'}")
-        
-        if not isinstance(telegram_config, dict):
-            self.config_error = "Telegram section must be a dictionary"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-
-        # Check if bot token exists
-        bot_token = telegram_config.get('bot_token')
-        if not bot_token or not isinstance(bot_token, str) or not bot_token.strip():
-            self.config_error = "Missing or invalid Telegram bot token"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-        
-        logger.debug(f"Bot token found, length: {len(bot_token)} characters")
-        return True
-
-    def _validate_actions_section(self):
-        """Validate the actions section if it exists.
-        
-        Returns:
-            bool: True if validation passes, False if it fails (with error set)
-        """
-        actions_config = self.config.get('actions', {})
-        logger.debug(f"Actions config: {list(actions_config.keys()) if isinstance(actions_config, dict) else 'invalid'}")
-        
-        if not isinstance(actions_config, dict):
-            self.config_error = "Actions section must be a dictionary"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-
-        # Validate each action
-        for action_name, action_config in actions_config.items():
-            if not self._validate_individual_action(action_name, action_config):
-                return False
-                
-        return True
-
-    def _validate_individual_action(self, action_name, action_config):
-        """Validate a single action configuration.
-        
-        Args:
-            action_name (str): The name of the action
-            action_config: The action configuration
-            
-        Returns:
-            bool: True if validation passes, False if it fails (with error set)
-        """
-        logger.debug(f"Validating action '{action_name}': {action_config}")
-        
-        # Check if action name starts with uppercase letter (reserved for built-in actions)
-        if action_name and action_name[0].isupper():
-            self.config_error = f"Action '{action_name}' starts with uppercase letter, which is reserved for built-in actions"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-        
-        if not isinstance(action_config, dict):
-            self.config_error = f"Action '{action_name}' must be a dictionary"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-        
-        if not action_config.get('command'):
-            self.config_error = f"Action '{action_name}' missing required 'command' field"
-            logger.error(f"Config validation failed: {self.config_error}")
-            return False
-        
-        logger.debug(f"Action '{action_name}' validated successfully")
-        return True
-
-    def validate_config(self):
-        """Validate the configuration and set validation status."""
-        logger.debug("Starting config validation")
-        try:
-            # Validate config structure
-            if not self._validate_config_structure():
-                return
-
-            # Validate telegram section
-            if not self._validate_telegram_section():
-                return
-
-            # Validate actions section
-            if not self._validate_actions_section():
-                return
-
-            # If we get here, config is valid
-            self.config_valid = True
-            self.config_error = None
-            logger.info("Config validation completed successfully")
-
-        except Exception as e:
-            self.config_error = f"Config validation error: {e}"
-            logger.error(f"Config validation exception: {e}")
-            logger.error(f"Exception details: {traceback.format_exc()}")
 
     def setup_actions(self):
         """Setup actions from configuration."""
-        actions_config = self.config.get('actions', {})
+        actions_config = self.config_manager.get_actions_config()
         logger.debug(f"Setting up {len(actions_config)} actions")
         
         for name, action_config in actions_config.items():
@@ -368,8 +242,8 @@ class TelegramClient:
 
     def get_connection_status(self) -> str:
         """Get current connection status for tray menu."""
-        if not self.config_valid:
-            return f"Config Error: {self.config_error}"
+        if not self.config_manager.is_valid:
+            return f"Config Error: {self.config_manager.error}"
         return self.connection_status
 
     def start_client(self) -> bool:
@@ -381,12 +255,12 @@ class TelegramClient:
             return True
 
         # Don't start client if config is invalid
-        if not self.config_valid:
-            self.connection_status = f"Config Error: {self.config_error}"
-            logger.error(f"Cannot start client - invalid config: {self.config_error}")
+        if not self.config_manager.is_valid:
+            self.connection_status = f"Config Error: {self.config_manager.error}"
+            logger.error(f"Cannot start client - invalid config: {self.config_manager.error}")
             return False
 
-        token = self.config.get('telegram', {}).get('bot_token')
+        token = self.config_manager.get_bot_token()
         if not token:
             self.connection_status = "No bot token configured"
             logger.error("No Telegram bot token configured")
@@ -429,7 +303,7 @@ class TelegramClient:
 
     async def _async_run_client(self):
         """Async client runner."""
-        token = self.config.get('telegram', {}).get('bot_token')
+        token = self.config_manager.get_bot_token()
         logger.debug(f"Creating application with token (length: {len(token)})")
 
         # Create application (telegram library will be available)
@@ -747,7 +621,7 @@ class TelegramClient:
             'error_count': self.error_count,
             'last_message_time': self.last_message_time.isoformat() if self.last_message_time else None,
             'connection_status': self.connection_status,
-            'config_valid': self.config_valid,
+            'config_valid': self.config_manager.is_valid,
             'actions_registered': len(self.action_registry.actions),
             'running': self.running
         }

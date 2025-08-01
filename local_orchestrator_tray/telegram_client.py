@@ -232,62 +232,109 @@ class TelegramClient:
             logger.error(f"Exception details: {traceback.format_exc()}")
             self.config = {'telegram': {}, 'actions': {}}
 
+    def _validate_config_structure(self):
+        """Validate that the config is a dictionary.
+        
+        Returns:
+            bool: True if validation passes, False if it fails (with error set)
+        """
+        if not isinstance(self.config, dict):
+            self.config_error = "Config file must contain a YAML dictionary"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+        return True
+
+    def _validate_telegram_section(self):
+        """Validate the telegram section and bot token.
+        
+        Returns:
+            bool: True if validation passes, False if it fails (with error set)
+        """
+        telegram_config = self.config.get('telegram', {})
+        logger.debug(f"Telegram config section: {list(telegram_config.keys()) if isinstance(telegram_config, dict) else 'invalid'}")
+        
+        if not isinstance(telegram_config, dict):
+            self.config_error = "Telegram section must be a dictionary"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+
+        # Check if bot token exists
+        bot_token = telegram_config.get('bot_token')
+        if not bot_token or not isinstance(bot_token, str) or not bot_token.strip():
+            self.config_error = "Missing or invalid Telegram bot token"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+        
+        logger.debug(f"Bot token found, length: {len(bot_token)} characters")
+        return True
+
+    def _validate_actions_section(self):
+        """Validate the actions section if it exists.
+        
+        Returns:
+            bool: True if validation passes, False if it fails (with error set)
+        """
+        actions_config = self.config.get('actions', {})
+        logger.debug(f"Actions config: {list(actions_config.keys()) if isinstance(actions_config, dict) else 'invalid'}")
+        
+        if not isinstance(actions_config, dict):
+            self.config_error = "Actions section must be a dictionary"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+
+        # Validate each action
+        for action_name, action_config in actions_config.items():
+            if not self._validate_individual_action(action_name, action_config):
+                return False
+                
+        return True
+
+    def _validate_individual_action(self, action_name, action_config):
+        """Validate a single action configuration.
+        
+        Args:
+            action_name (str): The name of the action
+            action_config: The action configuration
+            
+        Returns:
+            bool: True if validation passes, False if it fails (with error set)
+        """
+        logger.debug(f"Validating action '{action_name}': {action_config}")
+        
+        # Check if action name starts with uppercase letter (reserved for built-in actions)
+        if action_name and action_name[0].isupper():
+            self.config_error = f"Action '{action_name}' starts with uppercase letter, which is reserved for built-in actions"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+        
+        if not isinstance(action_config, dict):
+            self.config_error = f"Action '{action_name}' must be a dictionary"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+        
+        if not action_config.get('command'):
+            self.config_error = f"Action '{action_name}' missing required 'command' field"
+            logger.error(f"Config validation failed: {self.config_error}")
+            return False
+        
+        logger.debug(f"Action '{action_name}' validated successfully")
+        return True
+
     def validate_config(self):
         """Validate the configuration and set validation status."""
         logger.debug("Starting config validation")
         try:
-            # Check if config is a dictionary
-            if not isinstance(self.config, dict):
-                self.config_error = "Config file must contain a YAML dictionary"
-                logger.error(f"Config validation failed: {self.config_error}")
+            # Validate config structure
+            if not self._validate_config_structure():
                 return
 
-            # Check telegram section
-            telegram_config = self.config.get('telegram', {})
-            logger.debug(f"Telegram config section: {list(telegram_config.keys()) if isinstance(telegram_config, dict) else 'invalid'}")
-            if not isinstance(telegram_config, dict):
-                self.config_error = "Telegram section must be a dictionary"
-                logger.error(f"Config validation failed: {self.config_error}")
+            # Validate telegram section
+            if not self._validate_telegram_section():
                 return
 
-            # Check if bot token exists
-            bot_token = telegram_config.get('bot_token')
-            if not bot_token or not isinstance(bot_token, str) or not bot_token.strip():
-                self.config_error = "Missing or invalid Telegram bot token"
-                logger.error(f"Config validation failed: {self.config_error}")
+            # Validate actions section
+            if not self._validate_actions_section():
                 return
-            else:
-                logger.debug(f"Bot token found, length: {len(bot_token)} characters")
-
-            # Check actions section if it exists
-            actions_config = self.config.get('actions', {})
-            logger.debug(f"Actions config: {list(actions_config.keys()) if isinstance(actions_config, dict) else 'invalid'}")
-            if not isinstance(actions_config, dict):
-                self.config_error = "Actions section must be a dictionary"
-                logger.error(f"Config validation failed: {self.config_error}")
-                return
-
-            # Validate each action
-            for action_name, action_config in actions_config.items():
-                logger.debug(f"Validating action '{action_name}': {action_config}")
-                
-                # Check if action name starts with uppercase letter (reserved for built-in actions)
-                if action_name and action_name[0].isupper():
-                    self.config_error = f"Action '{action_name}' starts with uppercase letter, which is reserved for built-in actions"
-                    logger.error(f"Config validation failed: {self.config_error}")
-                    return
-                
-                if not isinstance(action_config, dict):
-                    self.config_error = f"Action '{action_name}' must be a dictionary"
-                    logger.error(f"Config validation failed: {self.config_error}")
-                    return
-                
-                if not action_config.get('command'):
-                    self.config_error = f"Action '{action_name}' missing required 'command' field"
-                    logger.error(f"Config validation failed: {self.config_error}")
-                    return
-                
-                logger.debug(f"Action '{action_name}' validated successfully")
 
             # If we get here, config is valid
             self.config_valid = True

@@ -7,14 +7,8 @@ on:
 
 jobs:
   create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    
-    steps:
-    build-macos-app:
     name: Build macOS App Bundle
     runs-on: macos-latest
-    needs: test
     
     steps:
     - uses: actions/checkout@v4
